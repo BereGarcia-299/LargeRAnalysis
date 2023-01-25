@@ -293,51 +293,49 @@ int sysUncert(int jetR = R4, string collisionType = "RAA" , int jes_uncrt = 0, i
 
       if(binsJetRate2015Meas){
 	TH1D *nom_pp = (TH1D*)nominalDataFile->Get(Form("Unfolded_ppData_R%d_%dIter_%s",JetRadius[jetR],iter_wPtShp_pp,centBins_2015Meas[iCentBin].c_str()));
-	TH1D *sys_hist_pp = (TH1D*)sysUncrt[iSysUncert]->Get(Form("Unfolded_ppData_R%d_%dIter_%s",JetRadius[jetR],iter_wPtShp_pp,centBins_2015Meas[iCentBin].c_str());
+	TH1D *sys_hist_pp = (TH1D*)sysUncrt[iSysUncert]->Get(Form("Unfolded_ppData_R%d_%dIter_%s",JetRadius[jetR],iter_wPtShp_pp,centBins_2015Meas[iCentBin].c_str()));
       }
       
       
-	  
-      
-
       sysroot->cd();
       
-	
-      if(collisionType=="pbpbdata"){
-        	
-	sys_hist->Scale(1/numEventsMinBias);
-      }
-      if(collisionType=="pp"){
-	
-	sys_hist->Scale(1/ppDataLumiVals[jetR]);
+      //scaling factor for Pb+Pb jet rates
+      double scaling_fac = -1.0;
+      //scaling factor for pp jet rates when plotting RAA
+      if(collisionType=="RAA"){
+
+	//pp Nominal pT spectra
+	nom_pp->Scale(1/ppDataLumiVals[jetR]);
+	nom_pp->Scale(1.,"width");
+	nom_pp->Scale(1/etaRange);
+
+	//pp Variated pT spectra
+	sys_hist_pp->Scale(1/ppDataLumiVals[jetR]);
+	sys_hist_pp->Scale(1.,"width");
+	sys_hist_pp->Scale(1/etaRange);
       }
 
-      if(debug)cout << __LINE__ << endl;
-      sys_hist->Scale(1.,"width");
-      sys_hist->Scale(1/etaRange);
-      if(debug)cout << __LINE__ << endl;
-      if(collisionType=="pbpbdata")sys_hist->Scale(1/tAA_2015map[iCentBin]);
-      sys_hist->Draw();
-      if(debug)cout << __LINE__ << endl;
-      if(collisionType=="pbpbdata"){
-	if(debug)cout << __LINE__ << endl;
-	nom->Scale(1/numEventsMinBias);
-	nom->Scale(1/tAA_2015map[iCentBin]);
-	if(debug)cout << __LINE__ << endl;
-      }
 
-      if(debug)cout << __LINE__ << endl;
-      if(collisionType=="pp"){
-	nom->Scale(1/ppDataLumiVals[jetR]);
+      if(collisionType=="pbpbdata" || collisionType=="RAA"){
+        scaling_fac = tAA_2015map[iCentBin]*numEventsMinBias; //Scaling factor for Pb+Pb
+      }else if(collisionType=="pp"){
+	scaling_fac = ppDataLumiVals[jetR]; //Scaling factor for pp
       }
-      if(debug)cout <<__LINE__ << endl;
-
       
-      
+      //Scaling nominal
+      nom->Scale(1/scaling_fac);
       nom->Scale(1.,"width");
       nom->Scale(1/etaRange);
-      
 
+      //Scaling variated
+      sys_hist->Scale(1/scaling_fac);
+      sys_hist->Scale(1.,"width");
+      sys_hist->Scale(1/etaRange);
+      
+      
+      
+      sys_hist->Draw();
+      
       nom->Write("",TObject::kOverwrite);
       sys_hist->Write(Form("Unfolded_%sData_R%d_%dIter_%s_%s_%d",collisionType.c_str(),JetRadius[jetR],iter_wPtShp,centBins_2015Meas[iCentBin].c_str(),sysUncertType.c_str(),iSysUncert),TObject::kOverwrite);
      
