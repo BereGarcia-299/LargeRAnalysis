@@ -7,10 +7,13 @@
 int sysUncert(int jetR = R4, string collisionType = "RAA" , int jes_uncrt = 0, int jer_uncrt = -1, int unf_uncrt =-1,bool debug =true, bool binsJetRate2015Meas = true,bool binsRAA2015Meas=true,int etacut = 28){
  
   string collSys = "pp";
-  if(collisionType=="pbpbdata")collSys = "PbPb";
+  if(collisionType=="pbpbdata" || collisionType=="RAA")collSys = "PbPb";
   
   TFile *nominalDataFile;
   
+  //This is when you are calcualting RAA Sys. Uncert.
+  TFile *nominalDataFile_pp;
+
   string sysUncertType = "JES";
   
   TFile *sysUncrt[40]; //This will be used for either pp or Pb+Pb 
@@ -40,9 +43,15 @@ int sysUncert(int jetR = R4, string collisionType = "RAA" , int jes_uncrt = 0, i
   //Nominal iterations for unfilding systematic
   TFile *fileNominalIter_wPtShpWeights;
   TFile *fileNominalIter_woPtShpWeights;
+
   
   int numIter_wShpWghts[Tot_Radii][num2015MeasBins];
   int numIter_woShpWghts[Tot_Radii][num2015MeasBins];
+
+  
+  //This is when you want RAA sytematics 
+  TFile *fileNominalIter_wPtShpWeights_pp;
+  int numIter_wShpWghts_pp[Tot_Radii][num2015MeasBins];
 
   string tag = "";
  
@@ -54,18 +63,46 @@ int sysUncert(int jetR = R4, string collisionType = "RAA" , int jes_uncrt = 0, i
   location_nominal = "/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/SysUncert/";
   string location_var = "UnfoldedData";
 
+
+
+  //This is for when you want to calculate the systematics for RAA
+  string location_pp_nominal = "";
+  string lovation_pp_var = "";
+
+
   if(binsJetRate2015Meas == true){
     location_nominal = "/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/2015CentBinsFiles";
     location_var = Form("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/2015CentBinsFiles/Unfolded/%sDir",collSys.c_str());
     
   }else if(binsRAA2015Meas==true){
-    
-
+    //pp
+    location_pp_nominal = "/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/2015CentBinsFiles/rAABins_pp/nominal";
+    location_pp_var = "/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/2015CentBinsFiles/rAABins_pp/Unfolded";
+    //Pb+Pb
+    location_nominal = "/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/2015CentBinsFiles/rAABins_PbPb";
+    location_var = "/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/2015CentBinsFiles/rAABins_PbPb/Unfolded";
   }
+
   string binsUsed = "2018MeasBins";
   if(binsJetRate2015Meas)binsUsed = "JetRate2015Bins";
-  
+  if(binsRAA2015Meas==true)binsUsed = "2015RAARateBins";
+
+  //NOMINAL DATA FILE
+  nominalDataFile = new TFile(Form("%s/nominal/hist_26282548_05302022_Unfolded_%sData_ATLAS_Official_RAA_Binning_17Iters_10000Toys_%s_etaRange%dNominal.root",location_nominal.c_str(),collSys.c_str(),binsUsed.c_str(),etacut),"READ");
+
+  //Nominal data file for pp when calculating RAA Sys.Ucer.
+  if(binsRAA2015Meas==true)nominalDataFile_pp = new File(Form("%s/nominal/hist_26282548_05302022_Unfolded_ppData_ATLAS_Official_RAA_Binning_17Iters_10000Toys_%s_etaRange%dNominal.root",location_nominal.c_str(),binsUsed.c_str(),etacut),"READ");
+
+
+
+  //Pick up file with nominal iter. num. for nominal pT dis.
   fileNominalIter_wPtShpWeights = new TFile(Form("%s/nominal/nominalIter_%s_%s_withpTShapeWeights_etaRange%d.root",location_nominal.c_str(),collSys.c_str(),binsUsed.c_str(),etacut),"READ");
+
+  if(binsRAA2015Meas==true){
+    fileNominalIter_wPtShpWeights = new TFile(Form("%s/nominal/nominalIter_pp_%s_withpTShapeWeights_etaRange%d.root",location_pp_nominal.c_str(),binsUsed.c_str(),etacut),"READ");
+  }
+  
+  //Pick up file with nominal iter. num. when 2D unfolding matricies are not pT shape weighted
   if(unf_uncrt != -1)fileNominalIter_woPtShpWeights = new TFile(Form("%s/nominal/nominalIter_%s_%s_withoutpTShapeWeights_etaRange%d.root",location_nominal.c_str(),collSys.c_str(),binsUsed.c_str(),etacut));
 
    
@@ -81,13 +118,18 @@ int sysUncert(int jetR = R4, string collisionType = "RAA" , int jes_uncrt = 0, i
        TH1D *hist1 = (TH1D*)fileNominalIter_woPtShpWeights->Get(Form("%s%s_Cent_%s_R%d_IterNum",collisionType.c_str(),tag.c_str(),centBins_2015Meas[iCentBin].c_str(),JetRadius[jetR]));
       
        numIter_woShpWghts[jetR][iCentBin]=hist1->GetBinContent(1);
-        cout << "For this cent bin" << iCentBin << "this is the nominal iteration (w/o pT shape weight): " << hist1->GetBinContent(1) << endl;
+        
       }
-     if(debug)cout<< __LINE__ << endl;
+     
+     if(binsRAA2015Meas==true){
+       numIter_wShpWghts_pp[jetR][iCentBin] = ((TH1D*)fileNominalIter_wPtShpWeights_pp->Get(Form("ppdata_Cent_R%d_IterNum",JetRadius[jetR])))->GetBinContent(1); //grabbing nominal iter num. for pp
+       
+     }
+     
      cout << "Grabbing this hist: " << Form("%s%s_Cent_%s_R%d_IterNum",collisionType.c_str(),tag.c_str(),centBins_2015Meas[iCentBin].c_str(),JetRadius[jetR]) << endl;
       TH1D *hist2 =  (TH1D*) fileNominalIter_wPtShpWeights->Get(Form("%s%s_Cent_%s_R%d_IterNum",collisionType.c_str(),tag.c_str(),centBins_2015Meas[iCentBin].c_str(),JetRadius[jetR]));
       cout << "For this cent bin" << iCentBin << " this is the nominal iteration (w/ pT shape weight): " << hist2->GetBinContent(1) << endl;
-      if(debug)cout<< __LINE__ << endl;
+     
        
       numIter_wShpWghts[jetR][iCentBin] =hist2->GetBinContent(1); 
       	
@@ -110,13 +152,22 @@ int sysUncert(int jetR = R4, string collisionType = "RAA" , int jes_uncrt = 0, i
       if(jer_uncrt==0 || jes_uncrt==0){
         
         sysUncrt[iUncertVal] = new TFile(Form("%s/hist_26282548_05302022_Unfolded_%sData_ATLAS_Official_RAA_Binning_17Iters_10000Toys_%sSys_%d_%s_etaRange%d.root",location_var.c_str(),collSys.c_str(),sysUncertType.c_str(),iUncertVal,binsUsed.c_str(),etacut),"READ");
+	if(binsRAA2015Meas==true){
+	  if(iUncertVal!=17 || (iUncertVal!=20){
+	      sysUncert_pp[iUncertVal] = new TFile(Form("%s/hist_26282548_05302022_Unfolded_ppData_ATLAS_Official_RAA_Binning_17Iters_10000Toys_%sSys_%d_%s_etaRange%d.root",location_pp_var.c_str(),sysUncertType.c_str(),iUncertVal,binsUsed.c_str(),etacut),"READ");
+	    }else{
+	      sysUncert_pp[iUncertVal]=
+	    }
+	  }
+
       }else if(unf_uncrt==0){
         if(iUncertVal==1){
 	  extratag="UnfoldingSystematic_FiniteMCStats";
 	}else if(iUncertVal==0){
 	  extratag="Unfold_pTShpWghtSys";
 	}
-        sysUncrt[iUncertVal] = new TFile(Form("%s/hist_26282548_05302022_Unfolded_%sData_ATLAS_Official_RAA_Binning_17Iters_10000Toys_%s_%s_etaRange%d.root",location_var.c_str(),collSys.c_str(),extratag.c_str(),binsUsed.c_str(),etacut),"READ");
+        
+	sysUncrt[iUncertVal] = new TFile(Form("%s/hist_26282548_05302022_Unfolded_%sData_ATLAS_Official_RAA_Binning_17Iters_10000Toys_%s_%s_etaRange%d.root",location_var.c_str(),collSys.c_str(),extratag.c_str(),binsUsed.c_str(),etacut),"READ");
         cout << __LINE__ << endl;
       }
     }//Uncertainty Loop
@@ -175,8 +226,6 @@ int sysUncert(int jetR = R4, string collisionType = "RAA" , int jes_uncrt = 0, i
 
 
 
-  nominalDataFile = new TFile(Form("%s/nominal/hist_26282548_05302022_Unfolded_%sData_ATLAS_Official_RAA_Binning_17Iters_10000Toys_%s_etaRange%dNominal.root",location_nominal.c_str(),collSys.c_str(),binsUsed.c_str(),etacut),"READ");
-
   
 
   
@@ -209,6 +258,8 @@ int sysUncert(int jetR = R4, string collisionType = "RAA" , int jes_uncrt = 0, i
       int iter_wPtShp =0;
       int iter = 0;
      
+      int iter_wPtShp_pp =0;
+
       iter_wPtShp = numIter_wShpWghts[jetR][iCentBin];
       if(unf_uncrt==0 && iSysUncert==0){
 	  
@@ -236,22 +287,31 @@ int sysUncert(int jetR = R4, string collisionType = "RAA" , int jes_uncrt = 0, i
       //Nominal measurement
       TH1D *nom = (TH1D*)nominalDataFile->Get(Form("Unfolded_%sData_R%d_%dIter_%s",collisionType.c_str(),JetRadius[jetR],iter_wPtShp,centBins_2015Meas[iCentBin].c_str()));
       cout << "Grabbing the nominal hist: " << Form("Unfolded_%sData_R%d_%dIter_%s",collisionType.c_str(),JetRadius[jetR],iter_wPtShp,centBins_2015Meas[iCentBin].c_str()) << endl;
-      
-      if(debug)cout << __LINE__ << endl;
-      
-      
 
+      TH1D *nom_pp;
+      TH1D *sys_hist_pp;
+
+      if(binsJetRate2015Meas){
+	TH1D *nom_pp = (TH1D*)nominalDataFile->Get(Form("Unfolded_ppData_R%d_%dIter_%s",JetRadius[jetR],iter_wPtShp_pp,centBins_2015Meas[iCentBin].c_str()));
+	TH1D *sys_hist_pp = (TH1D*)sysUncrt[iSysUncert]->Get(Form("Unfolded_ppData_R%d_%dIter_%s",JetRadius[jetR],iter_wPtShp_pp,centBins_2015Meas[iCentBin].c_str());
+      }
+      
+      
+	  
       
 
       sysroot->cd();
       
+	
       if(collisionType=="pbpbdata"){
-        if(debug)cout << __LINE__ << endl;	
+        	
 	sys_hist->Scale(1/numEventsMinBias);
-      }else if(collisionType=="pp"){
-	 if(debug)cout << __LINE__ << endl;
+      }
+      if(collisionType=="pp"){
+	
 	sys_hist->Scale(1/ppDataLumiVals[jetR]);
       }
+
       if(debug)cout << __LINE__ << endl;
       sys_hist->Scale(1.,"width");
       sys_hist->Scale(1/etaRange);
