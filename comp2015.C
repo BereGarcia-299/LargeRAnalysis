@@ -33,7 +33,7 @@
 using namespace std;
 
 
-int comp2015(bool rAAPlot = false,string collsnType = "pp",bool jetRatePbPb=true, bool centBins2015 = true ,int jetR=R4, int centBin = -1, bool comp2015 = true,int xMin_value=158,double xMax_value=1000,bool debug = true){
+int comp2015(bool rAAPlot = true,string collsnType = "RAA",bool jetRatePbPb=false, bool centBins2015 = true ,int jetR=R4, int centBin = -1, bool comp2015 = true,int xMin_value=158,double xMax_value=1000,bool debug = true){
   
   
   int numCentBins = 8;
@@ -191,13 +191,8 @@ int comp2015(bool rAAPlot = false,string collsnType = "pp",bool jetRatePbPb=true
   
   
      if(debug)cout << __LINE__ << endl;
-    
-    //if(!centBins2015)data_UnfFile = new TFile(Form("",location.c_str()),"READ"); 
-    //Using this to compare
-     
+      
     data_UnfFile = new TFile(Form("DiagPlots/rootFiles/2015CentBins/hist_26282548_05302022_Unfolded_%sData_ATLAS_Official_RAA_Binning_17Iters_10000Toys_JetRate2015Bins_etaRange28Nominal.root",collType_Tag.c_str()),"READ");
-
-     //data_UnfFile = new TFile(Form("/Users/berenicegarcia/Desktop/debug/hist_26282548_05302022_Unfolded_ppData_Eta15_ATLAS_Official_RAA_Binning_3Iters_10000Toys_NewpTBins.root",collType_Tag.c_str()),"READ");
 
 
      
