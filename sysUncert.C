@@ -57,6 +57,8 @@ int sysUncert(int jetR = R4, string collisionType = "RAA" , int jes_uncrt = -1, 
   //This is when you want RAA sytematics 
   TFile *fileNominalIter_wPtShpWeights_pp;
   int numIter_wShpWghts_pp[Tot_Radii][num2015MeasBins];
+  int numIter_woShpWghts_pp[Tot_Radii][num2015MeasBins];
+  TFile *fileNominalIter_woPtShpWeights_pp;
 
   string tag = "";
  
@@ -110,8 +112,15 @@ int sysUncert(int jetR = R4, string collisionType = "RAA" , int jes_uncrt = -1, 
   }
   
   //Pick up file with nominal iter. num. when 2D unfolding matricies are not pT shape weighted
-  if(unf_uncrt != -1)fileNominalIter_woPtShpWeights = new TFile(Form("%s/nominal/nominalIter_%s_%s_withoutpTShapeWeights_etaRange%d.root",location_nominal.c_str(),collSys.c_str(),binsUsed.c_str(),etacut));
+  if(unf_uncrt != -1){
+    cout << "UNFOLD HISTO FILE WE WANT: " << Form("%s/nominal/nominalIter_%s_%s_withoutpTShapeWeights_etaRange%d.root",location_nominal.c_str(),collSys.c_str(),binsUsed.c_str(),etacut) << endl;
 
+    fileNominalIter_woPtShpWeights = new TFile(Form("%s/nominal/nominalIter_%s_%s_withoutpTShapeWeights_etaRange%d.root",location_nominal.c_str(),collSys.c_str(),binsUsed.c_str(),etacut));
+    
+   if(binsRAA2015Meas==true){
+      fileNominalIter_woPtShpWeights_pp = new TFile(Form("%s/nominal/nominalIter_pp_%s_withoutpTShapeWeights_etaRange%d.root",location_pp_nominal.c_str(),binsUsed.c_str(),etacut));
+    }
+  }
    
 
 
@@ -122,11 +131,18 @@ int sysUncert(int jetR = R4, string collisionType = "RAA" , int jes_uncrt = -1, 
      if(debug)cout << __LINE__ << endl;
      if(unf_uncrt != -1){
        if(debug)cout<< __LINE__ << endl;
-       TH1D *hist1 = (TH1D*)fileNominalIter_woPtShpWeights->Get(Form("%s%s_Cent_%s_R%d_IterNum",collisionType.c_str(),tag.c_str(),centBins_2015Meas[iCentBin].c_str(),JetRadius[jetR]));
-      
+       cout << "get unfolding histo: " << Form("%s%s_Cent_%s_R%d_IterNum",tag_for_iterFile.c_str(),tag.c_str(),centBins_2015Meas[iCentBin].c_str(),JetRadius[jetR]) << endl;
+       if(debug)cout<< __LINE__ << endl;
+       TH1D *hist1 = (TH1D*)fileNominalIter_woPtShpWeights->Get(Form("%s%s_Cent_%s_R%d_IterNum",tag_for_iterFile.c_str(),tag.c_str(),centBins_2015Meas[iCentBin].c_str(),JetRadius[jetR]));
+       if(debug)cout<< __LINE__ << endl;
        numIter_woShpWghts[jetR][iCentBin]=hist1->GetBinContent(1);
-        
-      }
+       if(debug)cout<< __LINE__ << endl;
+       if(binsRAA2015Meas==true){
+	 cout << "LETS GRAB THIS: " << Form("ppdata_Cent_%s_R%d_IterNum",centBins_2015Meas[iCentBin].c_str(),JetRadius[jetR]) << endl;
+	 numIter_woShpWghts_pp[jetR][iCentBin] = ((TH1D*)fileNominalIter_woPtShpWeights_pp->Get(Form("ppdata_Cent_%s_R%d_IterNum",centBins_2015Meas[iCentBin].c_str(),JetRadius[jetR])))->GetBinContent(1);
+	 if(debug)cout<< __LINE__ << endl;
+       }
+     }
      if(debug)cout << __LINE__ << endl;
      if(binsRAA2015Meas==true){
        if(debug)cout << __LINE__ << endl;
@@ -153,6 +169,7 @@ int sysUncert(int jetR = R4, string collisionType = "RAA" , int jes_uncrt = -1, 
 	fiducialRegion_WOptShpWeights[jetR][iCentBin][0] = hist5->GetBinContent(1);
 	TH1D *hist6 = (TH1D*)fileNominalIter_woPtShpWeights->Get(Form("%s%s_Cent_%s_R%d_StartBinNum",tag_for_iterFile.c_str(),tag.c_str(),centBins_2015Meas[iCentBin].c_str(),JetRadius[jetR]));
 	fiducialRegion_WOptShpWeights[jetR][iCentBin][1] = hist6->GetBinContent(1);
+    
       }
     }
    
@@ -178,7 +195,9 @@ int sysUncert(int jetR = R4, string collisionType = "RAA" , int jes_uncrt = -1, 
 	}
         
 	sysUncrt[iUncertVal] = new TFile(Form("%s/hist_26282548_05302022_Unfolded_%sData_ATLAS_Official_RAA_Binning_17Iters_10000Toys_%s_%s_etaRange%d.root",location_var.c_str(),collSys.c_str(),extratag.c_str(),binsUsed.c_str(),etacut),"READ");
-        cout << __LINE__ << endl;
+        if(binsRAA2015Meas){
+	  sysUncert_pp[iUncertVal] = new TFile(Form("%s/hist_26282548_05302022_Unfolded_ppData_ATLAS_Official_RAA_Binning_17Iters_10000Toys_%s_%s_etaRange%d.root",location_pp_var.c_str(),extratag.c_str(),binsUsed.c_str(),etacut),"READ");
+	}
       }
     }//Uncertainty Loop
  
@@ -273,20 +292,28 @@ int sysUncert(int jetR = R4, string collisionType = "RAA" , int jes_uncrt = -1, 
       int iter = 0;
      
       int iter_wPtShp_pp =0;
-
+      int iter_pp =0; 
+      
       iter_wPtShp = numIter_wShpWghts[jetR][iCentBin];
+      if(binsRAA2015Meas==true){
+	iter_wPtShp_pp = numIter_wShpWghts_pp[jetR][iCentBin];
+	cout << "Saving this value in variable iter_wPtShp_pp: " << iter_wPtShp_pp << endl;
+      }
       if(unf_uncrt==0 && iSysUncert==0){
 	  
 	  iter = numIter_woShpWghts[jetR][iCentBin]; 
-	
+	  if(binsRAA2015Meas==true){
+	   
+	    iter_pp = numIter_woShpWghts_pp[jetR][iCentBin];
+	    cout << "for the unfolding systematic (pt shp wght): " <<  iter_pp << endl;
+	  }
       }else{
+	if(binsRAA2015Meas==true)iter_pp = numIter_wShpWghts[jetR][iCentBin];
 	iter = numIter_wShpWghts[jetR][iCentBin];
       }
       
-      if(binsRAA2015Meas==true)iter_wPtShp_pp = numIter_wShpWghts_pp[jetR][iCentBin];
-
       cout << "This is collisionType: " << collisionType.c_str() << endl;
-      //cout << "is this true: " << (collisionType.c_str()=="pbpbdata") << endl;
+    
       if((collisionType=="pbpbdata" || collisionType=="PbPb") && unf_uncrt!=0){
 	iter_wPtShp = numIter_wShpWghts[jetR][iCentBin];
 	cout << "This is the iteration number: " << iter_wPtShp << endl;
@@ -309,12 +336,14 @@ int sysUncert(int jetR = R4, string collisionType = "RAA" , int jes_uncrt = -1, 
       if(debug)cout << __LINE__<< endl;
       if(binsRAA2015Meas){
 	if(debug)cout << __LINE__<< endl;
+	cout << "grab iteration number: " << iter_wPtShp_pp << endl;
 	cout << "Grabbing this PP histo: " << Form("Unfolded_ppData_R%d_%dIter_%s",JetRadius[jetR],iter_wPtShp_pp,centBins_2015Meas[iCentBin].c_str()) << endl;
 	nom_pp = (TH1D*)nominalDataFile_pp->Get(Form("Unfolded_ppData_R%d_%dIter_%s",JetRadius[jetR],iter_wPtShp_pp,centBins_2015Meas[iCentBin].c_str()));
 	if(debug)cout << __LINE__<< endl;
-	cout << "VARIED PP SPECTRA HIST: " << Form("Unfolded_ppData_R%d_%dIter_%s",JetRadius[jetR],iter_wPtShp_pp,centBins_2015Meas[iCentBin].c_str()) << endl;
+	cout << "VARIED PP SPECTRA HIST: " << Form("Unfolded_ppData_R%d_%dIter_%s",JetRadius[jetR],iter_pp,centBins_2015Meas[iCentBin].c_str()) << endl;
 	cout << "This is for sys num: " << iSysUncert << endl;
-	sys_hist_pp = (TH1D*)sysUncert_pp[iSysUncert]->Get(Form("Unfolded_ppData_R%d_%dIter_%s",JetRadius[jetR],iter_wPtShp_pp,centBins_2015Meas[iCentBin].c_str()));
+	cout << "Grab this pp varied hist: " << Form("Unfolded_ppData_R%d_%dIter_%s",JetRadius[jetR],iter_pp,centBins_2015Meas[iCentBin].c_str()) << endl;
+	sys_hist_pp = (TH1D*)sysUncert_pp[iSysUncert]->Get(Form("Unfolded_ppData_R%d_%dIter_%s",JetRadius[jetR],iter_pp,centBins_2015Meas[iCentBin].c_str()));
 	if(debug)cout << __LINE__<< endl;
       }
       if(debug)cout << __LINE__<< endl;
