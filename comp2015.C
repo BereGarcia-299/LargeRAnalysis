@@ -33,58 +33,56 @@
 using namespace std;
 
 
-int comp2015(bool rAAPlot = false,string collsnType = "pp",bool jetRatePbPb=true, bool centBins2015 = true ,int jetR=R4, int centBin = -1, bool comp2015 = true,int xMin_value=158,double xMax_value=1000,bool debug = true){
-  
+int comp2015(string plot_type = "RAA",double eta_range_val = 2.8, bool jetRate2015Bins = false,bool rAA2015Bins=true,int jetR=R4, int centBin = -1, bool compDhanush = false ,int xMin_value=158,double xMax_value=1000,bool debug = true){
+
   
   int numCentBins = 8;
-  double etaRange = 0; //Using it to scale jet rate histo
-  double eta_range = 0; //Using it to input in Text function
-
-  string plotting_today = "rAA";
+  
+  string plotting_today = "";
 
   string collType_Tag = "pp";
-
-  if(jetRatePbPb==true){
+  
+   string fileTag = "ppdata";
+ 
+  if(jetRate2015Bins==true){
     plotting_today = "jetRate";
+    plotting_today = plotting_today+ "_jetRate2015BinsMeas";
    
+  }else if(rAA2015Bins==true){
+    plotting_today = plotting_today+ "_2015RAARateBins";
   }
-
+    
   if(centBin==-1){
     centBin=0;//this means you are plotting jet rates of pp
   }else if(centBin!=-1){
     collType_Tag = "PbPb";
   }
   
- 
+
   
-  
-  
-  if(comp2015){
-    plotting_today = plotting_today+ "_comp2015Meas";
-    etaRange = 2.8*2;
-    eta_range = 2.8;
+  if(collType_Tag=="PbPb" || plot_type == "RAA"){
+    fileTag="pbpbdata";
+    collType_Tag = "PbPb";
   }
-
-
-  //y-Axis of plot
-  double yMin = 0;
-  double yMax = 0;
-  //TLegend corners
-  double pt1 =0;
-  double pt2 =0;
-  double pt3 =0;
-  double pt4 =0;
-  
-  double offSet[] = {1,1e+2,1e+4,1e+6,1e+8,1e+10,1e+12,1e+14};
-  string offsetTag[] {"","#times 10^{2}","#times 10^{4}","#times 10^{6}","#times 10^{8}","#times 10^{10}","#times 10^{12}","#times 10^{14}"};
-
   
   
-  //Uploading files
-  //---------Pb+Pb
+  //Uploading files 
   TFile * data_File = NULL;
   TFile * data_UnfFile = NULL;
 
+  //When runnning code to plot RAA this will be for the pp files
+  //The above will be for Pb+Pb
+  TFile * data_UnfFile_pp = NULL;
+
+  //2015 comparison plots
+  TFile *file_2015;
+  TDirectoryFile * dir;
+
+  //File that contains the total systematics
+  cout << "LET US GRAB THIS: " << Form("Systematics/2015pTBins_FirstTotSysUncert_%s_R4.root",plot_type.c_str()) << endl;
+  TFile *file_tot = new TFile(Form("Systematics/2015pTBins_FirstTotSysUncert_%s_R4.root",plot_type.c_str()),"READ");
+
+  
   //Jet Rate in 2015 Pb+Pb Data
   TGraph *meas2015_graph[num2015MeasBins];
   TH1D *meas2015_hist[num2015MeasBins];
@@ -94,150 +92,137 @@ int comp2015(bool rAAPlot = false,string collsnType = "pp",bool jetRatePbPb=true
   //Statistical Erros
   TH1D *stat2015Errs[num2015MeasBins];
 
-  //RAA 2015 Meas
-  TH1D *rAAVal_hist[num2015MeasBins];
-  TH1D *rAAVal_graph[num2015MeasBins];
-
-  //Systematic Errors For rAA values
-  TH1D *rAAsys_ePlus[num2015MeasBins];
-  TH1D *rAAsys_eMinus[num2015MeasBins];
-
-  //Stat Erros
-  TH1D *rAA_statEr[num2015MeasBins];
-  if(debug)cout << __LINE__ << endl;
-
   //Nominal Iter Info and Fudicial Region Info
   TFile *nom_FGInfoFile = NULL;
+  TFile *nom_FGInfoFile_pp = NULL;
   
   int jetR_FR[8][2] = {}; //start and end bins
   int jetR_NominalIter[8] = {}; 
+  int jetR_NominalIter_pp[8] = {};
   
   string location = "/Users/berenicegarcia/Desktop/Berenice/Spring_2022/LargeRJets/LargeRJetNewCode/Locally/DiagPlots/";
-  string cent2015BinTag = "";
-  if(comp2015)cent2015BinTag="_JetRate2015Bins";
-  cout << "Using this file to only plot fuducial region: " << Form("%snominalIter_%s%s_withpTShapeWeights_etaRange28.root",location.c_str(),collType_Tag.c_str(),cent2015BinTag.c_str()) << endl;
-  
-  nom_FGInfoFile = new TFile(Form("%s/nominalIter_%s%s_withpTShapeWeights_etaRange28.root",location.c_str(),collType_Tag.c_str(),cent2015BinTag.c_str()),"READ");
+  //this will be used when plotting RAA
+  string location_rAAhists = "/Users/berenicegarcia/Desktop/Berenice/Spring_2022/LargeRJets/LargeRJetNewCode/Locally/DiagPlots/rootFiles/2015CentBins/rAA2015Bins";
 
-  TFile *file_tot = new TFile("Systematics/2015pTBins_FirstTotSysUncert_pbpbdata_R4.root","READ");
 
+  string pT2015BinsTag = "";
 
   
+  if(jetRate2015Bins)pT2015BinsTag="_JetRate2015Bins";
+  if(rAA2015Bins){
+    pT2015BinsTag="_2015RAARateBins";
+    location = location + "rootFiles/2015CentBins/rAA2015Bins/";
+  }
   
-  //if(comp2015)nom_FGInfoFile = new TFile(Form("%s/nominalIter_%s_withpTShapeWeights.root",location.c_str(),collType_Tag.c_str()),"READ");
-  if(debug)cout	<< __LINE__ << endl;
-  //Dhanush's 2018 RAA Values
-  TH1D *rAAVal_2018[num2015MeasBins];
-  TH1D *rAAVal_2018Sys[num2015MeasBins];
+  nom_FGInfoFile = new TFile(Form("%s/nominalIter_%s%s_withpTShapeWeights_etaRange%d.root",location.c_str(),collType_Tag.c_str(),pT2015BinsTag.c_str(),(int)(eta_range_val*10.0)),"READ");
 
-  TFile *file_2018RAA = new TFile("Dhanush_Files/2018PbPb_inclusive_jetraa.root","READ");
-  if(debug)cout << __LINE__ << endl;
+  if(plot_type == "RAA"){
+    nom_FGInfoFile_pp = new TFile(Form("%s/nominalIter_pp%s_withpTShapeWeights_etaRange%d.root",location_rAAhists.c_str(),pT2015BinsTag.c_str(),(int)(eta_range_val*10.0)),"READ");
+  }
 
-
-  
-   string fileTag = "ppdata";
- 
-  
-   if(collType_Tag=="PbPb")fileTag="pbpbdata";
-   if(debug)cout << __LINE__ << endl;
-   //Grabbing Nominal iteration Value & fudicial region bins
-   cout << "We will grab this hist..,: " << Form("%s_Cent_%s_R%d_%sBinNum",fileTag.c_str(),centBins_2015Meas[centBin].c_str(),jetRadius[jetR],startAndendTag[startAndend::start].c_str()) << endl;
+   
+   ///////////////////////////////////////////////////////////
+   //Grabbing Nominal iteration Value & fudicial region bins//
+   ///////////////////////////////////////////////////////////
+   cout << "We will grab this hist..: " << Form("%s_Cent_%s_R%d_%sBinNum",fileTag.c_str(),centBins_2015Meas[centBin].c_str(),jetRadius[jetR],startAndendTag[startAndend::start].c_str()) << endl;
    jetR_FR[centBin][startAndend::start] = ((TH1D*)nom_FGInfoFile->Get(Form("%s_Cent_%s_R%d_%sBinNum",fileTag.c_str(),centBins_2015Meas[centBin].c_str(),jetRadius[jetR],startAndendTag[startAndend::start].c_str())))->GetBinContent(1);
    if(debug)cout << __LINE__ << endl;
    jetR_FR[centBin][startAndend::end] = ((TH1D*)nom_FGInfoFile->Get(Form("%s_Cent_%s_R%d_%sBinNum",fileTag.c_str(),centBins_2015Meas[centBin].c_str(),jetRadius[jetR],startAndendTag[startAndend::end].c_str())))->GetBinContent(1);
-   if(debug)cout << __LINE__ << endl;
+    if(debug)cout << __LINE__ <<	endl;
    jetR_NominalIter[centBin] = ((TH1D*)nom_FGInfoFile->Get(Form("%s_Cent_%s_R%d_IterNum",fileTag.c_str(),centBins_2015Meas[centBin].c_str(),jetRadius[jetR])))->GetBinContent(1);
-   if(debug)cout << __LINE__ << endl;
+   if(debug)cout << __LINE__ <<	endl;
+   if(plot_type == "RAA"){
+     cout << "Trying to grab: " << Form("ppdata_Cent_%s_R%d_IterNum",centBins_2015Meas[centBin].c_str(),jetRadius[jetR]) << endl;
+     jetR_NominalIter_pp[centBin] = ((TH1D*)nom_FGInfoFile_pp->Get(Form("ppdata_Cent_%s_R%d_IterNum",centBins_2015Meas[centBin].c_str(),jetRadius[jetR])))->GetBinContent(1);
+      if(debug)cout << __LINE__ <<	endl;
+   }
 
+    if(debug)cout << __LINE__ <<	endl;
    //Grabbing the 2015 Measurement File and histogram
    int val_plot =3;
-   if(collsnType=="PbPb")val_plot = centBin;
-   if(debug)cout << __LINE__ << endl;
-   if(jetRatePbPb){
-    //Jet Rate for Pb+Pb 2015
-    if(debug)cout << __LINE__ << endl;
-    cout << "******YOU GRABBED THIS STUPID FILE TO COMPARE: " << Form("hep_2015Root/HEPData-ins1673184-v1-Table_%d.root",val_plot+1) << endl;
-    TFile *file_2015 = new TFile(Form("hep_2015Root/HEPData-ins1673184-v1-Table_%d.root",val_plot+1),"READ");
-    TDirectoryFile * dir = (TDirectoryFile*)file_2015->Get(Form("Table %d",val_plot+1));
-    meas2015_graph[centBin] = (TGraph*) dir->Get("Graph1D_y1");
-    meas2015_hist[centBin] = (TH1D*) dir->Get("Hist1D_y1");
+   if(plot_type=="PbPb")val_plot = centBin;
+
+   
+   
+   if(plot_type == "PbPb" || plot_type == "pp"){
+     
+     //Jet Rate for Pb+Pb 2015
+     file_2015 = new TFile(Form("hep_2015Root/HEPData-ins1673184-v1-Table_%d.root",val_plot+1),"READ");
+     dir = (TDirectoryFile*)file_2015->Get(Form("Table %d",val_plot+1));
+   
+
+   }else if(plot_type == "RAA"){
+     //RAA Values from the 2015 Measurements  
+     file_2015 = new TFile(Form("hep_2015Root/rAA2015/HEPData-ins1673184-v1-Table_%d.root",centBin+19),"READ");
+     dir = (TDirectoryFile*)file_2015->Get(Form("Table %d",centBin+19));
+      
+  
+   }
+
+
+     /* if(compDhanush){ */
+	
+     /* 	////////////////////////////// */
+     /* 	//Dhanush's 2018 RAA Values/// */
+     /* 	////////////////////////////// */
+  
+     /* 	TFile *file_2018RAA = new TFile("Dhanush_Files/2018PbPb_inclusive_jetraa.root","READ"); */
+  
+     /* 	//These are Dhanush's RAA Values from his analysis using 2018 Pb+Pb Data for R=0.4 jets */
+     /* 	meas2015_hist[centBin] = (TH1D*) file_2018RAA->Get(Form("h_jetpt_unfolded_raa_PbPb (%s)",centBinmap_2015Meas[centBin].c_str())); */
+     /*  } */
+
+   
+
+   
+   
+      meas2015_hist[centBin] = (TH1D*) dir->Get("Hist1D_y1");
+      meas2015_graph[centBin] = (TGraph*) dir->Get("Graph1D_y1");
+      
+      //Sys Values from 2015
+      sys2015Errors_h[centBin] = (TH1D*) dir->Get("Hist1D_y1_e1plus");
+      sys2015Errors_l[centBin] = (TH1D*) dir->Get("Hist1D_y1_e1minus");
+
+      // Stat Errot
+      stat2015Errs[centBin] = (TH1D*) dir->Get("Hist1D_y1_e2");
+
+
+
+
+
+
+   
+   //////////////////////////////////////////////////
+   ////Files that containt the nominal histograms////
+   /////////////////////////////////////////////////
+   
+   data_UnfFile = new TFile(Form("%s/hist_26282548_05302022_Unfolded_%sData_ATLAS_Official_RAA_Binning_17Iters_10000Toys%s_etaRange%dNominal.root",location.c_str(),collType_Tag.c_str(),pT2015BinsTag.c_str(),(int)(eta_range_val*10.0)),"READ");
     
-   if(debug)cout << __LINE__ << endl;
-    //Systematic Erros
-    sys2015Errors_l[centBin] = (TH1D*) dir->Get("Hist1D_y1_e1minus");
-    sys2015Errors_h[centBin] = (TH1D*) dir->Get("Hist1D_y1_e1plus");
-    stat2015Errs[centBin] = (TH1D*) dir->Get("Hist1D_y1_e2");
-
-   }else if(rAAPlot){
-      //RAA Values from the 2015 Measurements
-      TFile *file_rAA2015 = new TFile(Form("hep_2015Root/rAA2015/HEPData-ins1673184-v1-Table_%d.root",centBin+19),"READ");
-      TDirectoryFile * direc = (TDirectoryFile*)file_rAA2015->Get(Form("Table %d",centBin+19));
-      rAAVal_hist[centBin] = (TH1D*) direc->Get("Hist1D_y1");
-      rAAVal_graph[centBin] = (TH1D*) direc->Get("Graph1D_y1");
-      if(debug)cout	<< __LINE__ << endl;
-      //RAA Sys Values from 2015
-      rAAsys_ePlus[centBin] = (TH1D*) direc->Get("Hist1D_y1_e1plus");
-      rAAsys_eMinus[centBin] = (TH1D*) direc->Get("Hist1D_y1_e1minus");
-
-      //RAA Stat Errot
-      rAA_statEr[centBin] = (TH1D*) direc->Get("Hist1D_y1_e2");
-
-      //These are Dhanush's RAA Values from his analysis using 2018 Pb+Pb Data for R=0.4 jets
-      rAAVal_2018Sys[centBin] = (TH1D*) file_2018RAA->Get(Form("h_jetpt_unfolded_raa_syst_PbPb (%s)",centBinmap_2015Meas[centBin].c_str())); 
-      rAAVal_2018[centBin] = (TH1D*) file_2018RAA->Get(Form("h_jetpt_unfolded_raa_PbPb (%s)",centBinmap_2015Meas[centBin].c_str()));
-      cout << "Name of histo: " << Form("h_jetpt_unfolded_raa_PbPb (%s)",centBinmap_2015Meas[centBin].c_str()) << endl;
+    if(plot_type == "RAA"){
+      data_UnfFile_pp = new TFile(Form("%s/hist_26282548_05302022_Unfolded_ppData_ATLAS_Official_RAA_Binning_17Iters_10000Toys%s_etaRange%dNominal.root",location_rAAhists.c_str(),pT2015BinsTag.c_str(),(int)(eta_range_val*10.0)),"READ");
     }
-  
-  
-  
-     if(debug)cout << __LINE__ << endl;
     
-    //if(!centBins2015)data_UnfFile = new TFile(Form("",location.c_str()),"READ"); 
-    //Using this to compare
      
-    data_UnfFile = new TFile(Form("DiagPlots/rootFiles/2015CentBins/hist_26282548_05302022_Unfolded_%sData_ATLAS_Official_RAA_Binning_17Iters_10000Toys_JetRate2015Bins_etaRange28Nominal.root",collType_Tag.c_str()),"READ");
-
-     //data_UnfFile = new TFile(Form("/Users/berenicegarcia/Desktop/debug/hist_26282548_05302022_Unfolded_ppData_Eta15_ATLAS_Official_RAA_Binning_3Iters_10000Toys_NewpTBins.root",collType_Tag.c_str()),"READ");
-
-
-     
-     if(debug)cout << __LINE__ << endl;
-    yMin=3e-7;
-    yMax=1e-1;
-
-    pt1 =0.7514735;pt2 =0.2332016;pt3 =0.9823183;pt4 =0.5085639;
-
-
-
-
-     if(debug)cout << __LINE__ << endl;
-
-  
-  
+    
   
   //Print Out
   //cout << "This is the cent bin we will be plotting: " << centBin.c_str() << endl; 
   cout << "For radius: " << jetRadius[jetR] << endl;
 
-  //Histograms
-  //MC
-  TH1D* pTDis_Truth[numCentBins];
-  TH1D* pTDis_Reco[numCentBins];
-  //Data
- 
+  //Data 
   //Unfolded
   TH1D *pTDis_Unfo_Data[numCentBins];
+  TH1D *pTDis_Unfo_Data_pp[numCentBins];
   
+  int nom_iter_num = jetR_NominalIter[centBin];
   
-  
-
-    
-  //int nom_iter_num = jetR_NominalIter[centBin];int nom_iter_num = jetR_NominalIter[centBin];
-  int nom_iter_num = 2;
-     
   cout << "We grabbeds this histo: " << Form("Unfolded_%sData_R%d_%dIter_%s",collType_Tag.c_str(),jetRadius[jetR],nom_iter_num,centBins_2015Meas[centBin].c_str()) << endl;   
   pTDis_Unfo_Data[centBin] = (TH1D*)data_UnfFile->Get(Form("Unfolded_%sData_R%d_%dIter_%s",collType_Tag.c_str(),jetRadius[jetR],nom_iter_num,centBins_2015Meas[centBin].c_str()));
-   if(debug)cout << __LINE__ << endl;
+
+  if(plot_type=="RAA"){
+    cout << "Grab this histo: " << Form("Unfolded_ppData_R%d_%dIter_%s",jetRadius[jetR],nom_iter_num,centBins_2015Meas[centBin].c_str()) << endl;
+    pTDis_Unfo_Data_pp[centBin] = (TH1D*)data_UnfFile_pp->Get(Form("Unfolded_ppData_R%d_%dIter_%s",jetRadius[jetR],nom_iter_num,centBins_2015Meas[centBin].c_str()));
+  }
     
   TH1D *sysUncertTot[8];
   cout << __LINE__ << endl;
@@ -274,56 +259,25 @@ int comp2015(bool rAAPlot = false,string collsnType = "pp",bool jetRatePbPb=true
   double valx_error[centbins2015][20] = {};
   //Statistical Errors
   double stat_err[centbins2015][20] = {};
-
-  //These arrays belong to Dhanush's Analysis
-  double sys_rAAVals[centbins2015][20] = {};
-  double rAAVals_2018[centbins2015][20] = {};
   
-  if(rAAPlot){
-     if(debug)cout << __LINE__ << endl;
-    //Each centrality bins have different number of bins.
-    //Storing the total number of bins here
-    int totBins2015[8] = {16,12,15,13,15,13,15,13};
-    double offset = 14;
-      
-    for(int iCentBin = 0; iCentBin < numCentBins; iCentBin++){
-      
-      for(int iBin=1; iBin < totBins2015[iCentBin]+1; iBin++){
-	
-	
-	rAAVal_y[iCentBin][iBin] = rAAVal_hist[iCentBin]->GetBinContent(iBin);
-	rAAVal_x[iCentBin][iBin] = rAAVal_hist[iCentBin]->GetBinCenter(iBin)+ offset;
-      	
-	valx_error[iCentBin][iBin] = abs(rAAVal_hist[iCentBin]->GetBinCenter(iBin)-rAAVal_hist[iCentBin]->GetBinLowEdge(iBin)); 
-	
-	sys_ePlus[iCentBin][iBin] = rAAsys_ePlus[iCentBin]->GetBinContent(iBin);
-	sys_eMinus[iCentBin][iBin] = (-1)*rAAsys_eMinus[iCentBin]->GetBinContent(iBin);
-
-	//Statistical errors
-	stat_err[iCentBin][iBin] = rAA_statEr[iCentBin]->GetBinContent(iBin);
-	//cout << "This is the stat error for your first bin: " << rAA_statEr[iCentBin]->GetBinContent(iBin) << endl;
-      }//Looping over tot bins
-    }//Looping over tot. centralities
-  }
- 
     
     
       TLegend* leg_JetRate = NULL;
 
-      
+       if(debug)cout << __LINE__ << endl;
       TCanvas * canv = new TCanvas(Form("%s%s_R%d_%s",fileTag.c_str(),plotting_today.c_str(),jetRadius[jetR],centBins_2015Meas[centBin].c_str()),Form("%s_R%d_%s",plotting_today.c_str(),jetRadius[jetR],centBins_2015Meas[centBin].c_str()),55,125,1030,884);
-      
+       if(debug)cout << __LINE__ << endl;
       leg_JetRate = NULL;
-      leg_JetRate  = new TLegend(pt1,pt2,pt3,pt4,NULL,"brNDC");
+      leg_JetRate  = new TLegend(0.7514735,0.2332016,0.9823183,0.5085639,NULL,"brNDC");
       leg_JetRate->SetBorderSize(0);
       leg_JetRate->SetTextSize(0.03);
-      
+       if(debug)cout << __LINE__ << endl;
       gStyle->SetOptStat(0);
       canv->Range(2.071112,-17.56707,3.700387,25.96283);
       canv->SetFillColor(0);
       canv->SetBorderMode(0);
       canv->SetBorderSize(2);
-      
+       if(debug)cout << __LINE__ << endl;
       canv->SetLogx();
       canv->SetLogy();
       if(debug)cout << __LINE__ << endl;
@@ -332,7 +286,7 @@ int comp2015(bool rAAPlot = false,string collsnType = "pp",bool jetRatePbPb=true
       canv->SetTopMargin(0.2154421);
       canv->SetBottomMargin(0.2017435);
       canv->SetFrameBorderMode(0);
-
+       if(debug)cout << __LINE__ << endl;
       
       if(debug)cout << __LINE__ << endl; 
       //----------------------------------------FIRST PLOT PAD-----------------------------------------------//
@@ -344,7 +298,7 @@ int comp2015(bool rAAPlot = false,string collsnType = "pp",bool jetRatePbPb=true
       pad1->SetBorderMode(0);
       pad1->SetBorderSize(2);
       pad1->SetLogx();
-      pad1->SetLogy();
+      if(plot_type!="RAA")pad1->SetLogy();
       pad1->SetRightMargin(0.2933723);
       pad1->SetTopMargin(0.009225075);
       pad1->SetBottomMargin(0.08856085);
@@ -352,87 +306,71 @@ int comp2015(bool rAAPlot = false,string collsnType = "pp",bool jetRatePbPb=true
       pad1->SetFrameBorderMode(0);
       gPad->SetTicks(1);
       
-      cout << "This is the measurement 2018.... " << endl;
-      cout << "Value of unfolded hist bin number 6: " << pTDis_Unfo_Data[centBin]->GetBinContent(6) << endl;
-      
-      
-      pTDis_Unfo_Data[centBin]->Scale(1.,"width");
-      cout << "Bin content but now we scale it by the bin width..." << endl;
-      cout << "Value: " << pTDis_Unfo_Data[centBin]->GetBinContent(6) << endl;
-      
-      pTDis_Unfo_Data[centBin]->Scale(1/etaRange);
-      cout << "We now scaled it by the eta region (2.8*2): " << pTDis_Unfo_Data[centBin]->GetBinContent(6) << endl;
-      
 
-  
-
-     if(collsnType=="pp"){
-	pTDis_Unfo_Data[centBin]->Scale(1/ppDataLumiVals[jetR]);
-	cout << "scale it by the lumi" << endl;
-	cout << "this is the value: " << pTDis_Unfo_Data[centBin]->GetBinContent(6) << endl;
-      }else if(collsnType == "PbPb"){
-	pTDis_Unfo_Data[centBin]->Scale(1/tAA_2015map[centBin]);
-        pTDis_Unfo_Data[centBin]->Scale(1/numEventsMinBias);
+      double scale_factor = -1;
+       if(debug)cout << __LINE__ << endl;
+      
+     if(plot_type=="pp"){
+       scale_factor = ppDataLumiVals[jetR];
+      }else if(plot_type == "PbPb" || plot_type == "RAA"){
+        scale_factor = tAA_2015map[centBin]*numEventsMinBias; 
       }
-	
+      if(debug)cout << __LINE__ << endl;
+     
+     pTDis_Unfo_Data[centBin]->Scale(1.,"width");
+     pTDis_Unfo_Data[centBin]->Scale(1/eta_range_val);
+     pTDis_Unfo_Data[centBin]->Scale(1/scale_factor);
+      if(debug)cout << __LINE__ << endl;
+     if(plot_type=="RAA"){
+       if(debug)cout << __LINE__ << endl;
+       pTDis_Unfo_Data_pp[centBin]->Scale(1/ppDataLumiVals[jetR]);
+       pTDis_Unfo_Data_pp[centBin]->Scale(1.,"width");
+       pTDis_Unfo_Data_pp[centBin]->Scale(1/eta_range_val);
+       pTDis_Unfo_Data[centBin]->Divide(pTDis_Unfo_Data_pp[centBin]);
+       if(debug)cout << __LINE__ << endl;
+     }
+     
+     
       //This is to compare systematics between 2015 and 2018 meas.
-      double sysError2018_yh[10] ={};
-      double sysError2018_yl[10] ={};
-      double sysError2015_yl[10] = {};
-      double sysError2015_yh[10] = {};
+      double sysError2018_yh[16] ={};
+      double sysError2018_yl[16] ={};
+      double sysError2015_yl[16] = {};
+      double sysError2015_yh[16] = {};
         
             
-    double pTval[10] = {};
-    double ratio[10] = {};
+    double pTval[16] = {};
+    double ratio[16] = {};
     //Statistical Erros
-    double error_yl[10] = {};
-    double error_yh[10]={};
-    double error_x[10]={};
+    double error_yl[16] = {};
+    double error_yh[16]={};
+    double error_x[16]={};
 
     
     //Systematic Errors
-    double error_sys_yl[10] = {};
-    double error_sys_yh[10] = {};
+    double error_sys_yl[16] = {};
+    double error_sys_yh[16] = {};
     //experimenting
-    double error_Sys_ylnew[10] ={};
-    double error_Sys_yhnew[10] ={};
-    double yvalnew[10] = {};
-    double xvalnew[10] = {};
-    double errorxnew[10]={};
+    double error_Sys_ylnew[16] ={};
+    double error_Sys_yhnew[16] ={};
+    double yvalnew[16] = {};
+    double xvalnew[16] = {};
+    double errorxnew[16]={};
 
     
       
     int startBin_num = 0;
     bool passOnce = false;
-      
-    for(int iBin =2; iBin < 10; iBin++){
+    int numbinstot = 10;
+    if(rAA2015Bins) numbinstot=16;
+    for(int iBin =2; iBin < numbinstot; iBin++){
 	  
 	 while(!passOnce){
-	    cout << "iBin: " << iBin << endl;
-	    cout << "This it what is saved in  passOnce var. " << passOnce << endl;
-	    cout << "This is what is saved in startBin_num." << startBin_num << endl;
-	    
-	    cout << "This is the value of the bin center in meas. 2015 w/ the bin number saved in iBin: " << meas2015_hist[centBin]->GetBinCenter(iBin+4) << endl;
-	    cout << "This is the bin center of bin number number saved in startBin_num (my meas.): " << pTDis_Unfo_Data[centBin]->GetBinCenter(startBin_num) << endl;
 	    if(meas2015_hist[centBin]->GetBinCenter(startBin_num) != pTDis_Unfo_Data[centBin]->GetBinCenter(iBin+4)){
 	      startBin_num++;
 	    }else{
 	      passOnce =true;
 	    }
 	  }
-	 cout << endl;
-	 cout << "BIN CENTER OF 2015 MEAS:  " << meas2015_hist[centBin]->GetBinCenter(startBin_num) << endl;
-	 cout << "BIN EDGE OF 2015 MEAS: " << meas2015_hist[centBin]->GetBinLowEdge(startBin_num) << endl;
-	 cout << "BIN HIGH EDGE OF 2015 MEAS: " << (meas2015_hist[centBin]->GetBinCenter(startBin_num) + meas2015_hist[centBin]->GetBinWidth(startBin_num)/2) << endl;
-	 cout << endl;
-	 cout << "BIN CENTER OF 2018 MEAS: " << pTDis_Unfo_Data[centBin]->GetBinCenter(iBin+4) << endl;
-	 cout << "BIN EDGE OF 2018 MEAS: " << pTDis_Unfo_Data[centBin]->GetBinLowEdge(iBin+4) << endl;
-	 cout << "BIN HIGH EDGE OF 2018 MEAS: " << (pTDis_Unfo_Data[centBin]->GetBinCenter(iBin+4) + pTDis_Unfo_Data[centBin]->GetBinWidth(iBin+4)/2) << endl;
-	 cout << endl;
-
-
-
-	 
 
 	 
 	 //For the first plot
@@ -445,10 +383,10 @@ int comp2015(bool rAAPlot = false,string collsnType = "pp",bool jetRatePbPb=true
 
 
 	//For the second plot 
-	 error_Sys_ylnew[iBin] = (-1)*sys2015Errors_l[centBin]->GetBinContent(startBin_num);
-	 error_Sys_yhnew[iBin] =sys2015Errors_h[centBin]->GetBinContent(startBin_num);
-	 sysError2015_yl[iBin] = (-1)*sys2015Errors_l[centBin]->GetBinContent(startBin_num)/meas2015_hist[centBin]->GetBinContent(startBin_num);
-	 sysError2015_yh[iBin] = sys2015Errors_h[centBin]->GetBinContent(startBin_num)/meas2015_hist[centBin]->GetBinContent(startBin_num);
+	error_Sys_ylnew[iBin] = (-1)*sys2015Errors_l[centBin]->GetBinContent(startBin_num);
+	error_Sys_yhnew[iBin] =sys2015Errors_h[centBin]->GetBinContent(startBin_num);
+	sysError2015_yl[iBin] = (-1)*sys2015Errors_l[centBin]->GetBinContent(startBin_num)/meas2015_hist[centBin]->GetBinContent(startBin_num);
+	sysError2015_yh[iBin] = sys2015Errors_h[centBin]->GetBinContent(startBin_num)/meas2015_hist[centBin]->GetBinContent(startBin_num);
 	sysError2018_yh[iBin] = sysUncertTot[centBin]->GetBinContent(iBin+4)/100;
 	sysError2018_yl[iBin] = sysUncertTot[centBin]->GetBinContent(iBin+4)/100;
  
@@ -497,7 +435,7 @@ int comp2015(bool rAAPlot = false,string collsnType = "pp",bool jetRatePbPb=true
 
       
       
-    auto gSys = new TGraphAsymmErrors(10,xvalnew,yvalnew,errorxnew,errorxnew,error_Sys_ylnew,error_Sys_yhnew);
+    auto gSys = new TGraphAsymmErrors(numbinstot,xvalnew,yvalnew,errorxnew,errorxnew,error_Sys_ylnew,error_Sys_yhnew);
     auto largeRgSys = new TGraphAsymmErrors(15,totSysLargeR_x,largeR_y_val,totSysLargeR_ex,totSysLargeR_ex,totSysLargeR_yl,totSysLargeR_yh);
       if(debug)cout << __LINE__	<< endl;
       gSys->SetFillStyle(3002);largeRgSys->SetFillStyle(3002);
@@ -508,9 +446,9 @@ int comp2015(bool rAAPlot = false,string collsnType = "pp",bool jetRatePbPb=true
       
       pTDis_Unfo_Data[centBin]->SetTitle("");
       pTDis_Unfo_Data[centBin]->GetXaxis()->SetTitle("p_{T} [GeV]");
-      if(collsnType=="PbPb"){
+      if(plot_type=="PbPb"){
 	pTDis_Unfo_Data[centBin]->GetYaxis()->SetTitle("#frac{1}{<T_{AA}>}#frac{1}{N_{evt}}#frac{d^{2}N_{jet}}{dp_{T}d#eta}");
-      }else if(collsnType=="pp"){
+      }else if(plot_type=="pp"){
 	pTDis_Unfo_Data[centBin]->GetYaxis()->SetTitle("#frac{d^{2}#sigma}{dp_{T}d#eta}");
       }
       
@@ -533,17 +471,17 @@ int comp2015(bool rAAPlot = false,string collsnType = "pp",bool jetRatePbPb=true
 
       
       if(debug)cout << __LINE__	<< endl;
-      if(comp2015){
-	if(debug)cout << __LINE__	<< endl;
-	meas2015_hist[centBin]->SetMarkerStyle(20);
-	meas2015_hist[centBin]->SetMarkerColor(kCyan+2);
-	meas2015_hist[centBin]->Draw("same HIST P");
-      	if(debug)cout << __LINE__	<< endl;
-	meas2015_graph[centBin]->SetLineColor(kCyan+2);
-      	meas2015_graph[centBin]->Draw("P same");
-	gSys->Draw("same pe2");largeRgSys->Draw("same pe2");
-	if(debug)cout << __LINE__	<< endl;
-      }
+      
+      if(debug)cout << __LINE__	<< endl;
+      meas2015_hist[centBin]->SetMarkerStyle(20);
+      meas2015_hist[centBin]->SetMarkerColor(kCyan+2);
+      meas2015_hist[centBin]->Draw("same HIST P");
+      if(debug)cout << __LINE__	<< endl;
+      meas2015_graph[centBin]->SetLineColor(kCyan+2);
+      meas2015_graph[centBin]->Draw("P same");
+      gSys->Draw("same pe2");largeRgSys->Draw("same pe2");
+      if(debug)cout << __LINE__	<< endl;
+      
 
       if(debug)cout << __LINE__	<< endl;
       
@@ -551,7 +489,7 @@ int comp2015(bool rAAPlot = false,string collsnType = "pp",bool jetRatePbPb=true
       string tag_centBin = centBinmap_2015Meas[centBin].c_str();
       int yearDataTaken = 2018;
     
-      if(collsnType=="pp"){
+      if(plot_type=="pp"){
 	tag_collision = "pp";
 	tag_centBin = "";
 	yearDataTaken = 2017;
@@ -575,7 +513,7 @@ int comp2015(bool rAAPlot = false,string collsnType = "pp",bool jetRatePbPb=true
       
 
     leg_JetRate->Draw("same");
-    Text_Info("ppdata",-1, 4,0.762279,0.6126482,0.9626719,0.7720685,"",0.038,11,eta_range);
+    Text_Info(Form("%s",fileTag.c_str()),-1, 4,0.762279,0.6126482,0.9626719,0.7720685,"",0.038,11,eta_range_val);
 
 
     // Go back to the main canvas before defining pad2
@@ -615,8 +553,8 @@ int comp2015(bool rAAPlot = false,string collsnType = "pp",bool jetRatePbPb=true
     
     TLine *line_1 = new TLine(xMin_value,1,xMax_value,1);
     
-    auto plot2018 = new TGraphAsymmErrors(10,pTval,array_ones,error_x,error_x,sysError2018_yh,sysError2018_yl);  
-    auto plot2015 = new TGraphAsymmErrors(10,xvalnew,array_ones,errorxnew,errorxnew,sysError2015_yh,sysError2015_yl);
+    auto plot2018 = new TGraphAsymmErrors(18,pTval,array_ones,error_x,error_x,sysError2018_yh,sysError2018_yl);  
+    auto plot2015 = new TGraphAsymmErrors(18,xvalnew,array_ones,errorxnew,errorxnew,sysError2015_yh,sysError2015_yl);
     
     
     
@@ -667,44 +605,58 @@ int comp2015(bool rAAPlot = false,string collsnType = "pp",bool jetRatePbPb=true
     pad2->SetTitle("");
     gPad->SetTicks(1);
     TLegend *leg_ratio  = NULL;
-
-    if(comp2015)leg_ratio=new TLegend(0.731336,0.5061924,0.9621807,0.7644269,NULL,"brNDC");
-    if(!comp2015)leg_ratio=new TLegend(0.7141454,0.4007905,0.9449902,0.8645586,NULL,"brNDC");
-    leg_ratio->SetBorderSize(0);
+    int numbins_val = 5;
+     
+    if(jetRate2015Bins)leg_ratio=new TLegend(0.731336,0.5061924,0.9621807,0.7644269,NULL,"brNDC");
+    if(!jetRate2015Bins){
+      leg_ratio=new TLegend(0.7141454,0.4007905,0.9449902,0.8645586,NULL,"brNDC");
+      numbins_val=9;
+    }
+     leg_ratio->SetBorderSize(0);
      
 
      cout << __LINE__ << endl;
-    
-    for(int iIter = 1; iIter< 5; iIter++){
-      TH1D * ratio = new TH1D(Form("unfold_NOI_%d",iIter),Form("unfold_NOI_%d",iIter),jetRateMCBins,jetRateMC);
-      ratio = (TH1D*) pTDis_Unfo_Data[centBin]->Clone();
-      ratio->Divide(meas2015_hist[centBin]);
+
+     TH1D * ratio_hist;
+     
+    for(int iIter = 1; iIter< numbins_val; iIter++){
+      
+     if(jetRate2015Bins){
+       ratio_hist=new TH1D(Form("unfold_NOI_%d",iIter),Form("unfold_NOI_%d",iIter),jetRateMCBins,jetRateMC);
+     }
+     if(rAA2015Bins){
+       ratio_hist=new TH1D(Form("unfold_NOI_%d",iIter),Form("unfold_NOI_%d",iIter),bins2015,rAA_2015Bins[centBin]);
+      
+     }
+      
+      ratio_hist = (TH1D*) pTDis_Unfo_Data[centBin]->Clone();
+      ratio_hist->Divide(meas2015_hist[centBin]);
       if(iIter==1){
-	ratio->GetXaxis()->SetMoreLogLabels();
-	ratio->SetMaximum(1.5);
-	ratio->SetMinimum(0.2);
+	ratio_hist->GetXaxis()->SetMoreLogLabels();
+	ratio_hist->SetMaximum(1.5);
+	ratio_hist->SetMinimum(0.2);
 	
-	ratio->GetYaxis()->SetLabelSize(0.08);
-        ratio->GetXaxis()->SetLabelSize(0.089);
-	ratio->GetYaxis()->SetTitleSize(0.089);
-	ratio->GetXaxis()->SetTitleSize(0.089);
-	ratio->GetYaxis()->SetTitleOffset(0.3);
+	ratio_hist->GetYaxis()->SetLabelSize(0.08);
+        ratio_hist->GetXaxis()->SetLabelSize(0.089);
+	ratio_hist->GetYaxis()->SetTitleSize(0.089);
+	ratio_hist->GetXaxis()->SetTitleSize(0.089);
+	ratio_hist->GetYaxis()->SetTitleOffset(0.3);
 	
-	ratio->GetXaxis()->SetTitle("p_{T} [GeV]");
-	ratio->GetYaxis()->SetTitle("Ratio");
-	if(comp2015){
-	  ratio->SetMarkerColor(kWhite);
-	  ratio->SetFillColorAlpha(kBlue, 0.35);
-	  ratio->Draw();
-	  ratio->GetXaxis()->SetRangeUser(xMin_value,xMax_value);
-	}
+	ratio_hist->GetXaxis()->SetTitle("p_{T} [GeV]");
+	ratio_hist->GetYaxis()->SetTitle("Ratio_Hist");
+
+	ratio_hist->SetMarkerColor(kWhite);
+	ratio_hist->SetFillColorAlpha(kBlue, 0.35);
+	ratio_hist->Draw();
+	ratio_hist->GetXaxis()->SetRangeUser(xMin_value,xMax_value);
+	
       }
       
     }
 
      
-	auto g = new TGraphAsymmErrors(10,pTval,ratio,error_x,error_x,error_yl,error_yh);
-	auto g_Sys = new TGraphAsymmErrors(10,pTval,ratio,error_x,error_x,error_sys_yl,error_sys_yl);
+	auto g = new TGraphAsymmErrors(numbinstot,pTval,ratio,error_x,error_x,error_yl,error_yh);
+	auto g_Sys = new TGraphAsymmErrors(numbinstot,pTval,ratio,error_x,error_x,error_sys_yl,error_sys_yl);
 	
 	g_Sys->SetFillStyle(3002);
 	g_Sys->SetFillColor(kCyan+1);
@@ -719,12 +671,12 @@ int comp2015(bool rAAPlot = false,string collsnType = "pp",bool jetRatePbPb=true
 	g->SetMarkerSize(1.5);
 	g->SetMarkerColor(kCyan+2);
 	g->SetLineColor(kCyan+2);
-	if(comp2015){
-	  g->Draw("PE");
-	  g->Draw("same PE");
-	  g_Sys->Draw("same pe2");
-	  leg_ratio->AddEntry(g_Sys,"2018 Meas./2015 Meas.","pealf");
-	}
+	
+	g->Draw("PE");
+	g->Draw("same PE");
+	g_Sys->Draw("same pe2");
+	leg_ratio->AddEntry(g_Sys,"2018 Meas./2015 Meas.","pealf");
+	
 	leg_ratio->SetTextSize(0.099);
 	leg_ratio->Draw("same");
         
