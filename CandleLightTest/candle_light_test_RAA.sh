@@ -50,61 +50,28 @@ wait $pid
 collisionType="PbPb"
 addpTShapeWeight=true   #Apply pT shape weights
 jer_or_jes_Sys="JER"
-
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',0,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',1,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',2,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',3,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',4,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',5,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',6,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',7,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',8,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-
+for i in {0..20}; do
+    root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug','$i',"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
+done
 #We will apply this code so that it will wait until the above commands are done running
 pid=$!
 wait $pid
 
 #Running over MC but producing the JER Variations
 collisionType="pp"
+for i in {0..8}; do
+    root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug','$i',"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
+done
 
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',0,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',1,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',2,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',3,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',4,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',5,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',6,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',7,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',8,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
 
 #We will apply this code so that it will wait until the above commands are done running
 pid=$!
 wait $pid
 #Running over MC to produce JES systematics
 jer_or_jes_Sys="JES"
-
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',0,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',1,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',2,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',3,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',4,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',5,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',6,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',7,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',8,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',9,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',10,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',11,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',12,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',13,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',14,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',15,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',16,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',17,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' & 
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',18,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',19,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-
+for i in {0..19}; do
+    root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug','$i',"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
+done
 
 #We will apply this code so that it will wait until the above commands are done running
 pid=$!
@@ -113,28 +80,14 @@ wait $pid
 #Running over MC but producing the JES Variations
 collisionType="Pb+Pb"
 
-
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',0,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',1,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',2,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',3,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',4,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',5,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',6,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',7,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',8,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',9,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',10,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',11,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',12,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',13,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',14,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',15,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',16,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',17,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' & 
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',18,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',19,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
-root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug',20,"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
+for i in {0..20}; do
+    root -l -b 'LargeRAnalysis.C("'$collisionType'",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug','$i',"'$jer_or_jes_Sys'",'$addpTShapeWeight','$jetRate2015Bins','$rAA2015Binning')' &
+done
 
 
+#We will apply this code so that it will wait until the above commands are done running
+pid=$!
+wait $pid
 
+#UNFOLDING STEP
+bash unfolding_step.sh
