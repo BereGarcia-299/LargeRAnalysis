@@ -35,7 +35,7 @@
 #include "checkMakeDir.C"
 using namespace std;
 
-int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_mc = mcOrdata::mc,  string extraTag="MC", bool debug =false, int sys_uncrt =0, string jer_or_jes_Sys = "JES", bool jetRate2015Bins=false, bool rAA2015Binning = true){
+int LargeRAnalysis(string collisionType = "Data", int jet_Rad = R4,int data_or_mc = mcOrdata::data,  string extraTag="test_Data", bool debug =false, int sys_uncrt =-1, string jer_or_jes_Sys = "",bool addpTShapeWeight = false,bool jetRate2015Bins=false, bool rAA2015Binning = true){
   TH1::SetDefaultSumw2();
   bool dgb  = false;
   //If you set sumpTCut_MtchTrthJets to truth then you will collect
@@ -65,10 +65,7 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
   bool sumpTReq = true;
   bool clean_ppJets = true; //Apply Jet Cleaning tool
 
-  if(data_or_mc == mcOrdata::mc)addpTShapeWght=true;
-  if(!addpTShapeWght){
-    extraTag = "NopTShpWghts_" + extraTag ;
-   }
+  if(data_or_mc == mcOrdata::mc)addpTShapeWght=addpTShapeWeight;
   
 		       
   if(collisionType == "PbPb"){
@@ -77,10 +74,15 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
     clean_ppJets = false;
     if(data_or_mc == mc){
       addCentWeights = true;
-      addpTShapeWght = true;
+      addpTShapeWght = addpTShapeWeight;
       highEndCutOff = 700;
     }
   }
+
+  if(!addpTShapeWght){
+    extraTag = "NopTShpWghts_" + extraTag ;
+   }
+  
 
 
   //FULL/Half Closure Tests
@@ -725,7 +727,7 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
   if(debug)cout << __LINE__ << endl;
   if(debug)cout << "This is the total amount of entries: " << events_tot << endl;
   if(debug)cout << __LINE__ << endl;
-  //events_tot = 230909;
+  events_tot = 909;
   for(int iEvent = 0; iEvent < events_tot; iEvent++){    
     
     if(debug)cout << "This is the event number: " << iEvent << endl;
@@ -1635,8 +1637,10 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
   string place_in_this_dir = "";
   if(jetRate2015Bins==true){
     place_in_this_dir = Form("2015CentBinsFiles/%sVar/",collisionType.c_str());
-  }else if(rAA2015Binning==true){
+  }else if(rAA2015Binning && jer_or_jes_Sys != ""){
     place_in_this_dir = Form("2015CentBinsFiles/rAABins_%s/",collisionType.c_str());
+  }else if(rAA2015Binning){
+    place_in_this_dir = "2015CentBinsFiles/";
   }
     cout << "Final name of the output file: " << Form("%sRawHistograms_R%d_%s_%s.root",place_in_this_dir.c_str(),JetRadius[jet_Rad],collisionType.c_str(),extraTag.c_str()) << endl;
   

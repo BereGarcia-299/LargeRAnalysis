@@ -1,0 +1,21 @@
+#int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_mc = mcOrdata::mc,  string extraTag="MC", bool debug =false, int sys_uncrt =-1, string jer_or_jes_Sys = "JES", bool jetRate2015Bins=false, bool rAA2015Binning = true){
+
+
+
+#Setting Variables for Analysis code
+jet_Rad=1 #1 is R=0.4 and 0 is R=1.0 
+data_or_mc=0 #1 is MC and 0 is Data 
+extraTag="Data"
+debug=false #You want to debug? If yes, select true, but if not then select false
+sys_uncrt=-1 #Systematic Vartiation you want to look at 
+jer_or_jes_Sys="" #Systematic type
+jetRate2015Bins=false #2015 Jet rate pT Binning
+rAA2015Binning=true #2015 RAA pT Binning
+
+
+
+
+
+
+root -l -b 'LargeRAnalysis.C("PbPb",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug','$sys_uncrt',"'$jer_or_jes_Sys'",'$jetRate2015Bins','$rAA2015Binning')' &
+root -l -b 'LargeRAnalysis.C("pp",'$jet_Rad','$data_or_mc',"'$extraTag'",'$debug','$sys_uncrt',"'$jer_or_jes_Sys'",'$jetRate2015Bins','$rAA2015Binning')' &
