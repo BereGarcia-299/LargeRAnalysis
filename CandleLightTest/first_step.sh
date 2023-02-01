@@ -6,5 +6,5 @@ cp /usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/SysUncert/Unfoldin
 
 #git
 git add *
-git commit -m "pushing code to before running cadle test"
+git commit -m "pushing code to GitHub before running cadle test"
 git push
