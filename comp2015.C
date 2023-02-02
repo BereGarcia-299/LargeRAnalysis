@@ -33,7 +33,7 @@
 using namespace std;
 
 
-int comp2015(string plot_type = "RAA",double eta_range_val = 2.8, bool jetRate2015Bins = false,bool rAA2015Bins=true,int jetR=R4, int centBin = 4, bool compDhanush = false ,int xMin_value=125,double xMax_value=398,bool debug = true, bool savepdf = false){
+int comp2015(string plot_type = "PbPb",double eta_range_val = 2.8, bool jetRate2015Bins = true,bool rAA2015Bins=false,int jetR=R4, int centBin = 7, bool compDhanush = false ,bool debug = true, bool savepdf = false){
 
   
   int numCentBins = 8;
@@ -65,6 +65,11 @@ int comp2015(string plot_type = "RAA",double eta_range_val = 2.8, bool jetRate20
     collType_Tag = "PbPb";
   }
   
+  //Setting x-axis range
+  double xMin_value=set_xaxis[centBin][min_val];
+  double xMax_value=set_xaxis[centBin][max_val];
+
+  
   
   //Uploading files 
   TFile * data_File = NULL;
@@ -79,9 +84,13 @@ int comp2015(string plot_type = "RAA",double eta_range_val = 2.8, bool jetRate20
   TDirectoryFile * dir;
 
   //File that contains the total systematics
-  cout << "LET US GRAB THIS: " << Form("Systematics/2015pTBins_FirstTotSysUncert_%s_R4.root",plot_type.c_str()) << endl;
-  TFile *file_tot = new TFile(Form("Systematics/2015pTBins_FirstTotSysUncert_%s_R4.root",plot_type.c_str()),"READ");
-
+  cout << "LET US GRAB THIS: " << Form("Systematics/2015Meas/totSystematics/2015pTBins_FirstTotSysUncert_%s_R4.root",fileTag.c_str()) << endl;
+  TFile *file_tot;
+  if(plot_type == "pp" || plot_type == "PbPb"){
+    file_tot = new TFile(Form("Systematics/2015Meas/totSystematics/2015pTBins_FirstTotSysUncert_%s_R4.root",fileTag.c_str()),"READ");
+  }else if(plot_type == "RAA"){
+    file_tot = new TFile("Systematics/2015Meas/totSystematics/2015pTBins_FirstTotSysUncert_RAA_R4.root","READ");
+  }
   
   //Jet Rate in 2015 Pb+Pb Data
   TGraph *meas2015_graph[num2015MeasBins];
@@ -108,7 +117,10 @@ int comp2015(string plot_type = "RAA",double eta_range_val = 2.8, bool jetRate20
   string pT2015BinsTag = "";
 
   
-  if(jetRate2015Bins)pT2015BinsTag="_JetRate2015Bins";
+  if(jetRate2015Bins){
+    pT2015BinsTag="_JetRate2015Bins";
+    location = location + "rootFiles/2015CentBins/";
+  }
   if(rAA2015Bins){
     pT2015BinsTag="_2015RAARateBins";
     location = location + "rootFiles/2015CentBins/rAA2015Bins/";
@@ -482,8 +494,8 @@ int comp2015(string plot_type = "RAA",double eta_range_val = 2.8, bool jetRate20
       
       pTDis_Unfo_Data[centBin]->GetXaxis()->SetRangeUser(xMin_value,xMax_value);
       if(plot_type=="RAA"){
-	pTDis_Unfo_Data[centBin]->SetMaximum(1);
-	pTDis_Unfo_Data[centBin]->SetMinimum(0.62);
+	pTDis_Unfo_Data[centBin]->SetMaximum(set_yaxis_RAA[centBin][max_val]);
+	pTDis_Unfo_Data[centBin]->SetMinimum(set_yaxis_RAA[centBin][min_val]);
       }
       if(debug)cout << __LINE__	<< endl;
       
@@ -563,7 +575,7 @@ int comp2015(string plot_type = "RAA",double eta_range_val = 2.8, bool jetRate20
    legend_SysUncert->SetBorderSize(0);
    legend_SysUncert->SetTextSize(0.021);
    
-   double array_ones[15]={};
+   double array_ones[20]={};
 
    //filling array with ones to make sure so set the points in at one
    for(int iBin =0; iBin< numbinstot+1; iBin++){
