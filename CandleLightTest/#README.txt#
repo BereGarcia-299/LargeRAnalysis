@@ -1,0 +1,17 @@
+#############################################################################################
+################################### TLANĒX-TLI Test #########################################
+############################################################################################
+
+
+-----Purpose of test: Make the 2018 & 2015 comparison plots for the R=0.4 jets. If everything goes well, then we should see the same level of agreement that we saw previously before making any changes to the analysis code.
+
+
+------>First Step: Execute the 'first_step.sh' bash script. This bash script will copy all the necesary files to run this test (i.e. analysis code, header files) on to the local git repository. It will also commit and push all the files on to github.
+
+------>Second Step:There are three componenets to this test for when the following bash script is executed—candle_light_test_RAA.sh. 
+	      1. It will run over pp and Pb+Pb data to make the raw distributions using the Jet Rate and RAA 2015 binning. It will also do it when running over MC samples. 
+	      2. Once it is done making all the necessary raw pT spectras it will begin to UNFOLD the raw distributions using the variated jet pT (this is for the JER and JES systematic uncertainties) and also produce the nominal distributions.
+	      3. This last step is to calculate  
+
+
+     
