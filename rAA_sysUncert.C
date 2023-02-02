@@ -4,8 +4,7 @@
 #include "TFile.h"
 #include "/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/NewTreeVariables.h"
 
-int rAA_sysUncert(int jetR = R4, string collisionType = "RAA" , int jes_uncrt = -1, int jer_uncrt =-1, int unf_uncrt = 0,bool debug =true){
- 
+int rAA_sysUncert(int jetR = R4, string collisionType = "RAA" , int jes_uncrt = -1, int jer_uncrt =-1, int unf_uncrt = 0,bool debug =true){ 
   //Set this variable to true if you want to caluclate the uncertainties for RAA
   //Please set 'collisionType' to 'RAA'
   bool RAA_Uncert = true;

@@ -97,6 +97,89 @@ int systUncertHist(string collisionSys = "RAA",int jetR = R4,bool drawLeg = fals
     }else if(jer_or_jes=="Unfolding"){
       totSystUncer =2;
     }
+<<<<<<< HEAD
+=======
+   
+    for(int iUncertVal =0; iUncertVal < totUncert; iUncertVal++){
+      if(jer_uncrt==0 || jes_uncrt==0){
+        cout << "This is iUncertVal: " << iUncertVal << endl;
+        sysUncrt[iUncertVal] = new TFile(Form("%s/hist_26282548_05302022_Unfolded_%sData_ATLAS_Official_RAA_Binning_17Iters_10000Toys_%sSys_%d_%s_etaRange%d.root",location_var.c_str(),collSys.c_str(),sysUncertType.c_str(),iUncertVal,binsUsed.c_str(),etacut),"READ");
+	if(binsRAA2015Meas==true){
+	 
+	  if(iUncertVal!=17 && iUncertVal!=20){
+	      sysUncert_pp[iUncertVal] = new TFile(Form("%s/hist_26282548_05302022_Unfolded_ppData_ATLAS_Official_RAA_Binning_17Iters_10000Toys_%sSys_%d_%s_etaRange%d.root",location_pp_var.c_str(),sysUncertType.c_str(),iUncertVal,binsUsed.c_str(),etacut),"READ");
+	  }else{
+	      cout << "THIS BE iUncertVal: "  << iUncertVal << endl; 
+	      sysUncert_pp[iUncertVal] = nominalDataFile_pp;
+	  }
+	}
+
+      }else if(unf_uncrt==0){
+        if(iUncertVal==1){
+	  extratag="UnfoldingSystematic_FiniteMCStats";
+	}else if(iUncertVal==0){
+	  extratag="Unfold_pTShpWghtSys";
+	}
+        
+	sysUncrt[iUncertVal] = new TFile(Form("%s/hist_26282548_05302022_Unfolded_%sData_ATLAS_Official_RAA_Binning_17Iters_10000Toys_%s_%s_etaRange%d.root",location_var.c_str(),collSys.c_str(),extratag.c_str(),binsUsed.c_str(),etacut),"READ");
+        if(binsRAA2015Meas){
+	  cout << "GRAB the UNFOLDING SYS HISTOS: " << Form("%s/hist_26282548_05302022_Unfolded_ppData_ATLAS_Official_RAA_Binning_17Iters_10000Toys_%s_%s_etaRange%d.root",location_pp_var.c_str(),extratag.c_str(),binsUsed.c_str(),etacut) << endl;
+	  sysUncert_pp[iUncertVal] = new TFile(Form("%s/hist_26282548_05302022_Unfolded_ppData_ATLAS_Official_RAA_Binning_17Iters_10000Toys_%s_%s_etaRange%d.root",location_pp_var.c_str(),extratag.c_str(),binsUsed.c_str(),etacut),"READ");
+	}
+      }
+    }//Uncertainty Loop
+ 
+  
+  
+
+  
+ 
+
+  
+  //Number of bins
+  //int pTBinsTotR[2][8] = {{13,14,14,13,13,14,13,13},{22,22,22,19,19,20,19,19}};
+  int pTBinsTotR[2][8] = {{11,12,12,11,11,12,11,11},{20,20,20,17,17,18,17,17}};
+  //Luminosity Numbers
+  float LumNumPbPbData[] = {1.72317,1.72317}; //(nb^-1) R=1.0 HLT_j150_a10_ion_L1J50 / R=0.4 HLT_j85_ion_L1J30
+  
+  float ppDataLumiVals[] = {132.199e+3,132.199e+3};
+
+  //numEvebtsMinBias 
+  double numEventsMinBias = 7.383e+8*LumNumPbPbData[jetR];
+  
+
+  //eta range
+  double etaRange = 1.5*2;
+  if(etacut==28)etaRange = 2.8*2;
+
+  //Binning for this analysis
+  std::vector<std::vector<double>> bins;
+  bins.reserve(8);
+
+  if(jetR==R10 && !binsJetRate2015Meas){
+    //R = 1.0
+
+    bins.emplace_back(std::vector<double>{241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120,1300}); //0-10%
+    bins.emplace_back(std::vector<double>{220,241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120, 1300}); //10-20%
+    bins.emplace_back(std::vector<double>{211, 228, 245, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120}); //20-30%
+    bins.emplace_back(std::vector<double>{177, 198, 230, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000}); //30-40%
+    bins.emplace_back(std::vector<double>{177,198, 230, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000}); //40-50%
+    bins.emplace_back(std::vector<double>{177, 198, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000}); //50-60%
+    bins.emplace_back(std::vector<double>{177, 197, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 1000}); //60-70%
+    bins.emplace_back(std::vector<double>{177, 197, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 1000}); //70-80%~
+  }else if(jetR==R4 && !binsJetRate2015Meas){
+    //R=0.4
+    bins.emplace_back(std::vector<double>{100, 117, 138, 158, 178, 199, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120,1300}); //0-10%
+    bins.emplace_back(std::vector<double>{100, 117, 138, 158, 178, 199, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120, 1300}); //10-20%
+    bins.emplace_back(std::vector<double>{109, 126, 143, 160, 177, 194, 211, 228, 245, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120}); //20-30%
+    bins.emplace_back(std::vector<double>{100, 117, 138, 158, 177, 198, 230, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000}); //30-40%
+    bins.emplace_back(std::vector<double>{100, 117, 138, 158, 177, 198, 230, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000}); //40-50%
+    bins.emplace_back(std::vector<double>{100, 117, 138, 158, 177, 198, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000}); //50-60%
+    bins.emplace_back(std::vector<double>{100, 117, 138, 158, 177, 197, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 1000}); //60-70%
+    bins.emplace_back(std::vector<double>{100, 117, 138, 158, 177, 197, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 1000}); //70-80%~
+  }
+
+>>>>>>> refs/remotes/origin/main
 
     if(jer_or_jes == "JES" && collisionSys == "ppdata")totSystUncer=20;
 
