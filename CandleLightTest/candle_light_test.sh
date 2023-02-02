@@ -7,7 +7,7 @@
 
 #int LargeRAnalysis(string collisionType = "Data", int jet_Rad = R4,int data_or_mc = mcOrdata::data,  string extraTag="test_Data", bool debug =false, int sys_uncrt =-1, string jer_or_jes_Sys = "",bool addpTShapeWeight = false,bool jetRate2015Bins=false, bool rAA2015Binning = true){
 
-path_of_analysis_code="/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode"
+path_of_analysis_code="/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/LargeRAnalysis"
 
 
 #------1.Run analysis code over pp and Pb+Pb Data and MC
