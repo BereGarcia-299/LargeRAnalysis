@@ -33,7 +33,7 @@
 using namespace std;
 
 
-int comp2015(string plot_type = "RAA",double eta_range_val = 2.8, bool jetRate2015Bins = false,bool rAA2015Bins=true,int jetR=R4, int centBin = 0, bool compDhanush = false ,bool debug = true, bool savepdf = false){
+int comp2015(string plot_type = "PbPb",double eta_range_val = 2.8, bool jetRate2015Bins = true,bool rAA2015Bins=false,int jetR=R4, int centBin = 7, bool compDhanush = false ,bool debug = true, bool savepdf = false, bool zoomOut_ratio_yAxis = false){
 
   
   int numCentBins = 8;
@@ -45,6 +45,7 @@ int comp2015(string plot_type = "RAA",double eta_range_val = 2.8, bool jetRate20
    string fileTag = "ppdata";
 
    double totalEtaRange = eta_range_val*2;
+   
    
   if(jetRate2015Bins==true){
     plotting_today = "jetRate";
@@ -60,19 +61,28 @@ int comp2015(string plot_type = "RAA",double eta_range_val = 2.8, bool jetRate20
     collType_Tag = "PbPb";
   }
   
+  
+  //Setting x-axis range
+  double xMin_value=-1;
+  double xMax_value=-1;
 
+  if(plot_type == "RAA"){
+    xMax_value=set_xaxis[centBin][max_val];
+    xMin_value=set_xaxis[centBin][min_val];
+  }else if(plot_type == "pp"){
+    xMax_value=1000; //GeV
+    xMin_value=158; //GeV
+  }else if(plot_type == "PbPb"){
+    xMax_value=highpT2015JetRate[centBin];
+    xMin_value=158; //GeV
+  }
+  
+  
   
   if(collType_Tag=="PbPb" || plot_type == "RAA"){
     fileTag="pbpbdata";
     collType_Tag = "PbPb";
   }
-  
-  //Setting x-axis range
-  double xMin_value=set_xaxis[centBin][min_val];
-  double xMax_value=set_xaxis[centBin][max_val];
-  cout << "x_min: " << xMin_value << endl;
-  cout << "x_max: " << xMax_value << endl;
-  xMax_value = 1000;
   
   //Uploading files 
   TFile * data_File = NULL;
@@ -515,9 +525,12 @@ int comp2015(string plot_type = "RAA",double eta_range_val = 2.8, bool jetRate20
       if(plot_type=="RAA"){
 	pTDis_Unfo_Data[centBin]->SetMaximum(set_yaxis_RAA[centBin][max_val]);
 	pTDis_Unfo_Data[centBin]->SetMinimum(set_yaxis_RAA[centBin][min_val]);
-      }else if(plot_type == "PbPb"){
+      }else if(plot_type == "pp"){
 	pTDis_Unfo_Data[centBin]->SetMaximum(1e+2);
         pTDis_Unfo_Data[centBin]->SetMinimum(1e-8);
+      }else if(plot_type == "PbPb"){
+	pTDis_Unfo_Data[centBin]->SetMaximum(setYaxisMax[centBin]);
+        pTDis_Unfo_Data[centBin]->SetMinimum(setXaxisMin[centBin]);
       }
       if(debug)cout << __LINE__	<< endl;
       
@@ -615,8 +628,16 @@ int comp2015(string plot_type = "RAA",double eta_range_val = 2.8, bool jetRate20
 
     plot2018->SetTitle("");
     plot2018->GetXaxis()->SetMoreLogLabels(); 
-    plot2018->SetMaximum(1.12); 
-    plot2018->SetMinimum(0.88); 
+    if(plot_type=="RAA"){
+      plot2018->SetMaximum(1.12); 
+      plot2018->SetMinimum(0.88);
+    }else if(plot_type=="pp"){
+      plot2018->SetMaximum(1.23);
+      plot2018->SetMinimum(0.7);
+    }else if(plot_type=="PbPb"){
+       plot2018->SetMaximum(1.3);
+       plot2018->SetMinimum(0.68);
+    }
     plot2018->SetFillColorAlpha(kYellow-2, 0.5);
     
     
@@ -686,9 +707,23 @@ int comp2015(string plot_type = "RAA",double eta_range_val = 2.8, bool jetRate20
       ratio_hist->Divide(meas2015_hist[centBin]);
       if(iIter==1){
 	ratio_hist->GetXaxis()->SetMoreLogLabels();
-	ratio_hist->SetMaximum(1.28);
-	ratio_hist->SetMinimum(0.8);
-	
+	if(plot_type=="RAA"){
+	  ratio_hist->SetMaximum(1.28);
+	  ratio_hist->SetMinimum(0.8);
+	}else if(plot_type=="pp"){
+	   ratio_hist->SetMaximum(1.49);
+	   ratio_hist->SetMinimum(0.65);
+	}else if(plot_type=="PbPb"){
+	   ratio_hist->SetMaximum(1.83);
+           ratio_hist->SetMinimum(0.2);
+	   
+	}
+
+
+	if(zoomOut_ratio_yAxis){
+	  ratio_hist->SetMaximum(3.85);
+          ratio_hist->SetMinimum(0.2);
+	}
 	ratio_hist->GetYaxis()->SetLabelSize(0.08);
         ratio_hist->GetXaxis()->SetLabelSize(0.089);
 	ratio_hist->GetYaxis()->SetTitleSize(0.089);
