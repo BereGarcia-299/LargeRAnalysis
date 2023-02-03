@@ -33,7 +33,7 @@
 using namespace std;
 
 
-int comp2015(string plot_type = "PbPb",double eta_range_val = 2.8, bool jetRate2015Bins = true,bool rAA2015Bins=false,int jetR=R4, int centBin = 7, bool compDhanush = false ,bool debug = true, bool savepdf = false){
+int comp2015(string plot_type = "RAA",double eta_range_val = 2.8, bool jetRate2015Bins = false,bool rAA2015Bins=true,int jetR=R4, int centBin = 0, bool compDhanush = false ,bool debug = true, bool savepdf = false){
 
   
   int numCentBins = 8;
@@ -43,7 +43,9 @@ int comp2015(string plot_type = "PbPb",double eta_range_val = 2.8, bool jetRate2
   string collType_Tag = "pp";
   
    string fileTag = "ppdata";
- 
+
+   double totalEtaRange = eta_range_val*2;
+   
   if(jetRate2015Bins==true){
     plotting_today = "jetRate";
     plotting_today = plotting_today+ "_jetRate2015BinsMeas";
@@ -52,7 +54,7 @@ int comp2015(string plot_type = "PbPb",double eta_range_val = 2.8, bool jetRate2
     plotting_today = plotting_today+ "_2015RAARateBins";
   }
     
-  if(centBin==-1){
+  if(centBin==-1 || plot_type == "pp"){
     centBin=0;//this means you are plotting jet rates of pp
   }else if(centBin!=-1){
     collType_Tag = "PbPb";
@@ -68,8 +70,9 @@ int comp2015(string plot_type = "PbPb",double eta_range_val = 2.8, bool jetRate2
   //Setting x-axis range
   double xMin_value=set_xaxis[centBin][min_val];
   double xMax_value=set_xaxis[centBin][max_val];
-
-  
+  cout << "x_min: " << xMin_value << endl;
+  cout << "x_max: " << xMax_value << endl;
+  xMax_value = 1000;
   
   //Uploading files 
   TFile * data_File = NULL;
@@ -154,15 +157,15 @@ int comp2015(string plot_type = "PbPb",double eta_range_val = 2.8, bool jetRate2
    //Grabbing the 2015 Measurement File and histogram
    int val_plot =3;
    if(plot_type=="PbPb")val_plot = centBin;
-
-   
-   
-   if(plot_type == "PbPb" || plot_type == "pp"){
-     
+   if(plot_type == "pp"){
      //Jet Rate for Pb+Pb 2015
      file_2015 = new TFile(Form("hep_2015Root/HEPData-ins1673184-v1-Table_%d.root",val_plot+1),"READ");
      dir = (TDirectoryFile*)file_2015->Get(Form("Table %d",val_plot+1));
-   
+   }else if(plot_type == "PbPb"){
+       //Jet Rate for Pb+Pb 2015
+     cout << "This is the hep file you are using: " << Form("hep_2015Root/HEPData-ins1673184-v1-Table_%d.root",val_plot+11) << endl;
+     file_2015 = new TFile(Form("hep_2015Root/HEPData-ins1673184-v1-Table_%d.root",val_plot+11),"READ");
+     dir = (TDirectoryFile*)file_2015->Get(Form("Table %d",val_plot+11));
 
    }else if(plot_type == "RAA"){
      //RAA Values from the 2015 Measurements
@@ -209,7 +212,7 @@ int comp2015(string plot_type = "PbPb",double eta_range_val = 2.8, bool jetRate2
    //////////////////////////////////////////////////
    ////Files that containt the nominal histograms////
    /////////////////////////////////////////////////
-   
+      cout << "grab this file: " << Form("%s/hist_26282548_05302022_Unfolded_%sData_ATLAS_Official_RAA_Binning_17Iters_10000Toys%s_etaRange%dNominal.root",location.c_str(),collType_Tag.c_str(),pT2015BinsTag.c_str(),(int)(eta_range_val*10.0)) << endl;
    data_UnfFile = new TFile(Form("%s/hist_26282548_05302022_Unfolded_%sData_ATLAS_Official_RAA_Binning_17Iters_10000Toys%s_etaRange%dNominal.root",location.c_str(),collType_Tag.c_str(),pT2015BinsTag.c_str(),(int)(eta_range_val*10.0)),"READ");
     
     if(plot_type == "RAA"){
@@ -327,25 +330,36 @@ int comp2015(string plot_type = "PbPb",double eta_range_val = 2.8, bool jetRate2
        if(debug)cout << __LINE__ << endl;
       
      if(plot_type=="pp"){
+       cout << "Scale factor: " << scale_factor << endl;
        scale_factor = ppDataLumiVals[jetR];
+       cout << "scale_factor: " << scale_factor << endl;
+       cout << "Scale factor: " <<  scale_factor << endl;
       }else if(plot_type == "PbPb" || plot_type == "RAA"){
         scale_factor = tAA_2015map[centBin]*numEventsMinBias; 
       }
-      if(debug)cout << __LINE__ << endl;
+
+     cout << "Final scaling factor: " << scale_factor << endl;
+
      
-     pTDis_Unfo_Data[centBin]->Scale(1.,"width");
-     pTDis_Unfo_Data[centBin]->Scale(1/eta_range_val);
-     pTDis_Unfo_Data[centBin]->Scale(1/scale_factor);
       if(debug)cout << __LINE__ << endl;
+      cout << "this is the eta range val:  " <<  eta_range_val << endl;
+     pTDis_Unfo_Data[centBin]->Scale(1.,"width");
+     pTDis_Unfo_Data[centBin]->Scale(1/totalEtaRange);
+     pTDis_Unfo_Data[centBin]->Scale(1/scale_factor);
+      
+     cout << "bin center: " << pTDis_Unfo_Data[centBin]->GetBinCenter(8) << endl;
+     cout << "this is the bin content: " << pTDis_Unfo_Data[centBin]->GetBinContent(8) << endl;
+     if(debug)cout << __LINE__ << endl;
      if(plot_type=="RAA"){
        if(debug)cout << __LINE__ << endl;
        pTDis_Unfo_Data_pp[centBin]->Scale(1/ppDataLumiVals[jetR]);
        pTDis_Unfo_Data_pp[centBin]->Scale(1.,"width");
-       pTDis_Unfo_Data_pp[centBin]->Scale(1/eta_range_val);
+       pTDis_Unfo_Data_pp[centBin]->Scale(1/totalEtaRange);
        pTDis_Unfo_Data[centBin]->Divide(pTDis_Unfo_Data_pp[centBin]);
        if(debug)cout << __LINE__ << endl;
      }
-     
+     cout << __LINE__ << endl;
+     cout << "this is the bin content: " << pTDis_Unfo_Data[centBin]->GetBinContent(8) << endl;
      
       //This is to compare systematics between 2015 and 2018 meas.
       double sysError2018_yh[20] ={};
@@ -391,14 +405,19 @@ int comp2015(string plot_type = "PbPb",double eta_range_val = 2.8, bool jetRate2
 	    }
 	  }
 
-	 
+	 if(debug)cout << __LINE__ << endl;
 	 //For the first plot
+	 cout << "This is pTDis_Unfo_Data[centBin]->GetBinContent(iBin+4): " << pTDis_Unfo_Data[centBin]->GetBinContent(iBin+4) << endl;
+	 cout << "This is sysUncertTot[centBin]->GetBinContent(iBin+4): " << sysUncertTot[centBin]->GetBinContent(iBin+4) << endl;
 	totSysLargeR_yh[iBin] =  (sysUncertTot[centBin]->GetBinContent(iBin+4)*pTDis_Unfo_Data[centBin]->GetBinContent(iBin+4))/100;
+	if(debug)cout << __LINE__ << endl;
 	totSysLargeR_yl[iBin] =  ((sysUncertTot[centBin]->GetBinContent(iBin+4))*pTDis_Unfo_Data[centBin]->GetBinContent(iBin+4))/100;
 	largeR_y_val[iBin] = pTDis_Unfo_Data[centBin]->GetBinContent(iBin+4);
+	if(debug)cout << __LINE__ << endl;
 	totSysLargeR_x[iBin] = pTDis_Unfo_Data[centBin]->GetBinCenter(iBin+4);
+	if(debug)cout << __LINE__ << endl;
 	totSysLargeR_ex[iBin] = abs(pTDis_Unfo_Data[centBin]->GetBinCenter(iBin+4)-pTDis_Unfo_Data[centBin]->GetBinLowEdge(iBin+4));
-	
+	if(debug)cout << __LINE__ << endl;
 
 
 	//For the second plot 
@@ -496,6 +515,9 @@ int comp2015(string plot_type = "PbPb",double eta_range_val = 2.8, bool jetRate2
       if(plot_type=="RAA"){
 	pTDis_Unfo_Data[centBin]->SetMaximum(set_yaxis_RAA[centBin][max_val]);
 	pTDis_Unfo_Data[centBin]->SetMinimum(set_yaxis_RAA[centBin][min_val]);
+      }else if(plot_type == "PbPb"){
+	pTDis_Unfo_Data[centBin]->SetMaximum(1e+2);
+        pTDis_Unfo_Data[centBin]->SetMinimum(1e-8);
       }
       if(debug)cout << __LINE__	<< endl;
       
