@@ -2,11 +2,16 @@
 #define MY_HEADER_FILE_H
 
 #include <vector>
+  namespace {
+    //R=0.4
+    //Truth Binning
+    std::vector<std::vector<double>> binsR4_Truth;
+  
 
 
   //R=0.4
   //Truth Binning
-  std::vector<std::vector<double>> binsR4_Truth;
+  //vector<std::vector<double>> binsR4_Truth;
   binsR4_Truth.reserve(8);
   binsR4_Truth.emplace_back(std::vector<double>{66,83,100, 117, 138, 158, 178, 199, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120,1300}); //0-10%
   binsR4_Truth.emplace_back(std::vector<double>{66,83,100, 117, 138, 158, 178, 199, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120, 1300}); //10-20%
@@ -52,5 +57,5 @@
   binsR10.emplace_back(std::vector<double>{220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000}); //50-60%
   binsR10.emplace_back(std::vector<double>{220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 1000}); //60-70%
   binsR10.emplace_back(std::vector<double>{220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 1000}); //70-80%
-
+  }
 #endif
