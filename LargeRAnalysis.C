@@ -25,6 +25,7 @@
 #include "TLorentzVector.h"
 #include "bNec.h"
 #include "bFunctions.h"
+//#include "largeRAnalysisBinning.h"
 #include <TSystem.h>
 //Centrality Weights
 #include "centWeights.h"
@@ -35,7 +36,12 @@
 #include "checkMakeDir.C"
 using namespace std;
 
-int LargeRAnalysis(string collisionType = "Data", int jet_Rad = R4,int data_or_mc = mcOrdata::data,  string extraTag="test_Data", bool debug =false, int sys_uncrt =-1, string jer_or_jes_Sys = "",bool addpTShapeWeight = false,bool jetRate2015Bins=false, bool rAA2015Binning = true){
+int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_mc = mcOrdata::mc,  string extraTag="MC", bool debug =false, int sys_uncrt =-1, string jer_or_jes_Sys = "",bool addpTShapeWeight = false,bool jetRate2015Bins=false, bool rAA2015Binning = false, bool dijet2018bins = true){
+
+  cout << "dijet2018bins: " << dijet2018bins << endl;
+  cout << "rAA2015Binning: " << rAA2015Binning << endl;
+  cout << "jetRate2015Bins: " << jetRate2015Bins << endl;
+
   TH1::SetDefaultSumw2();
   bool dgb  = false;
   //If you set sumpTCut_MtchTrthJets to truth then you will collect
@@ -50,10 +56,12 @@ int LargeRAnalysis(string collisionType = "Data", int jet_Rad = R4,int data_or_m
   extraTag = Form("eta%d_",(int)(etacut*10)) + extraTag;
 
   
-  if(jetRate2015Bins==true){
+  if(jetRate2015Bins){
     extraTag = "2015JetRateBins_" + extraTag;
-  }else if(rAA2015Binning==true){
+  }else if(rAA2015Binning){
     extraTag = "2015RAARateBins_" + extraTag;
+  }else if(dijet2018bins){
+    extraTag = "2018DiJetBins_" + extraTag;
   }
   bool matchReq = true;
   if(data_or_mc == mcOrdata::data)matchReq =false;
@@ -137,6 +145,9 @@ int LargeRAnalysis(string collisionType = "Data", int jet_Rad = R4,int data_or_m
   bool fakeJets_Study=false;
 
 
+  
+
+
   //Binning for this analysis
   //Reco Binning
   std::vector<std::vector<std::vector<double>>> binsGenR(totRadii, std::vector<std::vector<double>>(8));
@@ -156,17 +167,20 @@ int LargeRAnalysis(string collisionType = "Data", int jet_Rad = R4,int data_or_m
   
   int pTBinsTotRTruth[2][8] = {{13,14,14,13,13,14,13,13},{22,22,22,19,19,20,19,19}};
   int pTBinsTotR[2][8] = {{11,12,12,11,11,12,11,11},{20,20,20,17,17,18,17,17}};
-  
+  //R=0.4
+  //Truth Binning
+  std::vector<std::vector<double>> binsR4_Truth;
+
   
 
   //R=0.4
   //Truth Binning
-  std::vector<std::vector<double>> binsR4_Truth;
+  
   binsR4_Truth.reserve(8);
   binsR4_Truth.emplace_back(std::vector<double>{66,83,100, 117, 138, 158, 178, 199, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120,1300}); //0-10%
   binsR4_Truth.emplace_back(std::vector<double>{66,83,100, 117, 138, 158, 178, 199, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120, 1300}); //10-20%
-  binsR4_Truth.emplace_back(std::vector<double>{75,92,109, 126, 143, 160, 177, 194, 211, 228, 245, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120}); //20-30% 
-  binsR4_Truth.emplace_back(std::vector<double>{66,83,100, 117, 138, 158, 177, 198, 230, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000}); //30-40%
+  binsR4_Truth.emplace_back(std::vector<double>{75,92,109, 126, 143, 160, 177, 194, 211, 228, 245, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120}); //20-30%
+  binsR4_Truth.emplace_back(std::vector<double>{66,83,100, 117, 138, 158, 177, 198, 230, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000});//30-40%
   binsR4_Truth.emplace_back(std::vector<double>{66,83,100, 117, 138, 158, 177, 198, 230, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000}); //40-50%
   binsR4_Truth.emplace_back(std::vector<double>{66,83,100, 117, 138, 158, 177, 198, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000}); //50-60%
   binsR4_Truth.emplace_back(std::vector<double>{66,83,100, 117, 138, 158, 177, 197, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 1000}); //60-70%
@@ -181,25 +195,8 @@ int LargeRAnalysis(string collisionType = "Data", int jet_Rad = R4,int data_or_m
   binsR4.emplace_back(std::vector<double>{100, 117, 138, 158, 177, 198, 230, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000}); //40-50%
   binsR4.emplace_back(std::vector<double>{100, 117, 138, 158, 177, 198, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000}); //50-60%
   binsR4.emplace_back(std::vector<double>{100, 117, 138, 158, 177, 197, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 1000}); //60-70%
-  binsR4.emplace_back(std::vector<double>{100, 117, 138, 158, 177, 197, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 1000}); //70-80
-
-  
-
-  //R = 1.0
-  //Truth Binning
-
-  std::vector<std::vector<double>> binsR10_Truth;
-  binsR10_Truth.reserve(8);
-  binsR10_Truth.emplace_back(std::vector<double>{241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120,1300}); //0-10%
-  binsR10_Truth.emplace_back(std::vector<double>{220 ,241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120, 1300}); //10-20%
-  binsR10_Truth.emplace_back(std::vector<double>{211, 228, 245, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120}); //20-30%
-  binsR10_Truth.emplace_back(std::vector<double>{177, 198, 230, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000}); //30-40%
-  binsR10_Truth.emplace_back(std::vector<double>{177,198, 230, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000}); //40-50%
-  binsR10_Truth.emplace_back(std::vector<double>{177, 198, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000}); //50-60%
-  binsR10_Truth.emplace_back(std::vector<double>{177, 197, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 1000}); //60-70%
-  binsR10_Truth.emplace_back(std::vector<double>{177, 197, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 1000}); //70-80%
- 
-
+  binsR4.emplace_back(std::vector<double>{100, 117, 138, 158, 177, 197, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 1000}); //70-80~
+    
 
   //Reco Binning
   std::vector<std::vector<double>> binsR10;
@@ -212,8 +209,20 @@ int LargeRAnalysis(string collisionType = "Data", int jet_Rad = R4,int data_or_m
   binsR10.emplace_back(std::vector<double>{220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000}); //50-60%
   binsR10.emplace_back(std::vector<double>{220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 1000}); //60-70%
   binsR10.emplace_back(std::vector<double>{220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 1000}); //70-80%
- 
 
+  std::vector<std::vector<double>> binsR10_Truth;
+  binsR10_Truth.reserve(8);
+  binsR10_Truth.emplace_back(std::vector<double>{241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120,1300}); //0-10%
+  binsR10_Truth.emplace_back(std::vector<double>{220 ,241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120, 1300}); //10\
+-20%
+  binsR10_Truth.emplace_back(std::vector<double>{211, 228, 245, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120}); //20-\
+30%
+  binsR10_Truth.emplace_back(std::vector<double>{177, 198, 230, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000}); //30-40%
+ binsR10_Truth.emplace_back(std::vector<double>{177,198, 230, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000}); //40-50%
+ binsR10_Truth.emplace_back(std::vector<double>{177, 198, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000}); //50-\
+60%
+  binsR10_Truth.emplace_back(std::vector<double>{177, 197, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 1000}); //60-70%
+ binsR10_Truth.emplace_back(std::vector<double>{177, 197, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 1000}); //70-80%
 
   for(int iRad =0; iRad < totRadii; iRad++){
     for(int icent =0; icent < 8; icent++){
@@ -405,22 +414,20 @@ int LargeRAnalysis(string collisionType = "Data", int jet_Rad = R4,int data_or_m
       double *arrayTruth = NULL;
       int numpTBins =0;
       int numpTBinsTruth = 0;
-      if(jetRate2015Bins==true){
+
+      if(jetRate2015Bins){
+	array = jetRateMC;arrayTruth = jetRateMC;
 	numpTBins =15;
-	numpTBinsTruth = 15;
-      }else if(rAA2015Binning==true){
+        numpTBinsTruth = 15;
+      }else if(rAA2015Binning){
+	array = rAA_2015Bins[iCent];arrayTruth =rAA_2015Bins[iCent];
 	numpTBins =20;
         numpTBinsTruth = 20;
-      }else if(jetRate2015Bins== false && rAA2015Binning == false){
-	numpTBins = pTBinsTotR[jet_Rad][iCent]; 
-	numpTBinsTruth = pTBinsTotRTruth[jet_Rad][iCent];
-      }
-
-      if(jetRate2015Bins==true){
-	array = jetRateMC;arrayTruth = jetRateMC;
-      }else if(rAA2015Binning==true){
-	array = rAA_2015Bins[iCent];arrayTruth =rAA_2015Bins[iCent]; 
-      }else if(jetRate2015Bins== false && rAA2015Binning == false){
+      }else if(dijet2018bins){
+	array = dijetBins; arrayTruth = dijetBins;
+	numpTBins =15;
+        numpTBinsTruth = 15;
+      }else if(!jetRate2015Bins && !rAA2015Binning && !dijet2018bins){
 	if(jet_Rad == R4){	
 	  array = binsR4.at(iCent).data();
 	  arrayTruth = binsR4_Truth.at(iCent).data();
@@ -431,6 +438,9 @@ int LargeRAnalysis(string collisionType = "Data", int jet_Rad = R4,int data_or_m
 	  arrayTruth = binsR10_Truth.at(iCent).data();
 	
 	}
+
+	numpTBins = pTBinsTotR[jet_Rad][iCent];
+        numpTBinsTruth = pTBinsTotRTruth[jet_Rad][iCent];
       }
        
       if(fakeJets_Study){
@@ -551,11 +561,11 @@ int LargeRAnalysis(string collisionType = "Data", int jet_Rad = R4,int data_or_m
   TF1 *ptshapeWghts[totRadii][number_CentBins];
   if(addpTShapeWght){
     if(collisionType=="PbPb"){
-      ptshape_wghtsFile[R10] = new TFile("ptshape_weights_R10.root","READ");
-      ptshape_wghtsFile[R4] = new TFile("erf_ptshape_weights_new.root","READ");
+      ptshape_wghtsFile[R10] = new TFile("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/LargeRAnalysis/pt_shp_wghts/ptshape_weights_R10.root","READ");
+      ptshape_wghtsFile[R4] = new TFile("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/LargeRAnalysis/pt_shp_wghts/erf_ptshape_weights_new.root","READ");
     }else if(collisionType=="pp"){
-      ptshape_wghtsFile[R10] = new TFile("ptshape_weights_R10.root","READ"); //this is not the correcfile.
-      ptshape_wghtsFile[R4] = new TFile("erf_ptshape_weights_pp.root","READ");
+      ptshape_wghtsFile[R10] = new TFile("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/LargeRAnalysis/pt_shp_wghts/ptshape_weights_R10.root","READ"); //this is not the correcfile.
+      ptshape_wghtsFile[R4] = new TFile("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/LargeRAnalysis/pt_shp_wghts/erf_ptshape_weights_pp.root","READ");
     }
 
       
@@ -727,7 +737,7 @@ int LargeRAnalysis(string collisionType = "Data", int jet_Rad = R4,int data_or_m
   if(debug)cout << __LINE__ << endl;
   if(debug)cout << "This is the total amount of entries: " << events_tot << endl;
   if(debug)cout << __LINE__ << endl;
-  events_tot = 909;
+  //events_tot = 909;
   for(int iEvent = 0; iEvent < events_tot; iEvent++){    
     
     if(debug)cout << "This is the event number: " << iEvent << endl;
@@ -1636,12 +1646,17 @@ int LargeRAnalysis(string collisionType = "Data", int jet_Rad = R4,int data_or_m
 
   string place_in_this_dir = "";
   if(jetRate2015Bins==true){
-    place_in_this_dir = Form("2015CentBinsFiles/%sVar/",collisionType.c_str());
+    place_in_this_dir = Form("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode//2015CentBinsFiles/%sVar/",collisionType.c_str());
   }else if(rAA2015Binning && jer_or_jes_Sys != ""){
-    place_in_this_dir = Form("2015CentBinsFiles/rAABins_%s/",collisionType.c_str());
+    place_in_this_dir = Form("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode//2015CentBinsFiles/rAABins_%s/",collisionType.c_str());
   }else if(rAA2015Binning){
-    place_in_this_dir = "2015CentBinsFiles/";
+    cout << __LINE__ << endl;
+    place_in_this_dir = "/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/2015CentBinsFiles/";
+  }else if(dijet2018bins){
+    place_in_this_dir = Form("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/DijetBinning/%s/",collisionType.c_str());
   }
+
+
     cout << "Final name of the output file: " << Form("%sRawHistograms_R%d_%s_%s.root",place_in_this_dir.c_str(),JetRadius[jet_Rad],collisionType.c_str(),extraTag.c_str()) << endl;
   
   TFile *files_root = new TFile(Form("%sRawHistograms_R%d_%s_%s.root",place_in_this_dir.c_str(),JetRadius[jet_Rad],collisionType.c_str(),extraTag.c_str()),"RECREATE");
