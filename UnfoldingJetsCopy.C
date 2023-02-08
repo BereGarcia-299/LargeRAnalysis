@@ -28,7 +28,7 @@
 
 using namespace std;
 
-int UnfoldingJetsCopy(bool Unfoldpp = false, bool UnfoldPbPb = true, int jet_radius = R4,bool regCentBins = false,int numIter = 17, int etaRange = 28, int uncrt_sys = -1, string jer_or_jes = "",bool systematicUnfd = false, bool jetRate2015Bins = false,bool rAA2015Binning = true){
+int UnfoldingJetsCopy(bool Unfoldpp = false, bool UnfoldPbPb = true, int jet_radius = R4,bool regCentBins = false,int numIter = 17, int etaRange = 21, int uncrt_sys = -1, string jer_or_jes = "",bool systematicUnfd = false, bool jetRate2015Bins = false,bool rAA2015Binning = false, bool dijet2018bins = true){
 
   //We set pp_Or_PbPb to true if unfolding Pb+Pb Data
   string pp_or_PbPb = "ppData" ;
@@ -61,6 +61,8 @@ int UnfoldingJetsCopy(bool Unfoldpp = false, bool UnfoldPbPb = true, int jet_rad
     location="/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/2015CentBinsFiles/";
   }else if(rAA2015Binning){
     location=Form("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/2015CentBinsFiles/rAABins_%s/",colsnSys.c_str());
+  }else if(dijet2018bins){
+    location = Form("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/DijetBinning/%s/",colsnSys.c_str());    
   }
 
   if(jer_or_jes==""){
@@ -81,14 +83,17 @@ int UnfoldingJetsCopy(bool Unfoldpp = false, bool UnfoldPbPb = true, int jet_rad
   string location_of_dataFile = "";
   string location_of_mcFile = "";
 
-  if(jetRate2015Bins== true){
+  if(jetRate2015Bins){
     location_of_dataFile = "/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/2015CentBinsFiles";
     location_of_mcFile = "/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/2015CentBinsFiles/";
 
     if(jer_or_jes!="")location_of_mcFile = location_of_mcFile + Form("%sVar",colsnSys.c_str());
-  }else if(rAA2015Binning==true){
+  }else if(rAA2015Binning){
     location_of_dataFile = "/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/2015CentBinsFiles";
     location_of_mcFile = Form("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/2015CentBinsFiles/rAABins_%s",colsnSys.c_str());
+  }else if(dijet2018bins){
+    location_of_dataFile = Form("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/DijetBinning/%s",colsnSys.c_str());
+    location_of_mcFile = Form("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/DijetBinning/%s",colsnSys.c_str());
   }
 
 
@@ -107,6 +112,9 @@ int UnfoldingJetsCopy(bool Unfoldpp = false, bool UnfoldPbPb = true, int jet_rad
   }else if(rAA2015Binning==true){
     mc_tag = "_2015RAARateBins" +mc_tag;
     data_tag = "_2015RAARateBins" + data_tag;
+  }else if(dijet2018bins){
+    mc_tag = "_2018DiJetBins" + mc_tag;
+    data_tag = "_2018DiJetBins" + data_tag;
   }
 
   data_tag = "_NopTShpWghts"+ data_tag;
@@ -119,13 +127,6 @@ int UnfoldingJetsCopy(bool Unfoldpp = false, bool UnfoldPbPb = true, int jet_rad
   std::ofstream file("name_files_used.txt"); // open text file  
 
   
-  //File with histos that have raw spectras
-  pTDis_NotUnfolded = new TFile(Form("%s/%s.root",location_of_dataFile.c_str(),data_tag.c_str()),"READ");
-    
-  //File w/ necessary histos to Unfold Raw Data
-  forUnfolding = new TFile(Form("%s/%s.root",location_of_mcFile.c_str(),mc_tag.c_str()),"READ");
-
-
   if (file.is_open()) {
     file << "These are the files you used for the Unfolding Procedure..." << std::endl;
     file << "Raw Data File: " << Form("%s/%s.root",location_of_dataFile.c_str(),data_tag.c_str()) << std::endl;
@@ -134,6 +135,14 @@ int UnfoldingJetsCopy(bool Unfoldpp = false, bool UnfoldPbPb = true, int jet_rad
   } else {
     std::cout << "Unable to open file" << std::endl;
   }
+
+  
+  //File with histos that have raw spectras
+  pTDis_NotUnfolded = new TFile(Form("%s/%s.root",location_of_dataFile.c_str(),data_tag.c_str()),"READ");
+    
+  //File w/ necessary histos to Unfold Raw Data
+  forUnfolding = new TFile(Form("%s/%s.root",location_of_mcFile.c_str(),mc_tag.c_str()),"READ");
+
     
     
 
@@ -177,7 +186,7 @@ int UnfoldingJetsCopy(bool Unfoldpp = false, bool UnfoldPbPb = true, int jet_rad
 
     
   for(int iCentBin=0;iCentBin < number_CentBins; iCentBin++){
-
+    
       pTDisRecoMatchedJets[iCentBin] = (TH1D*) forUnfolding->Get(Form("R%d_Cent_%s",JetRadius[jet_radius],centBins_2015Meas[iCentBin].c_str()));
       RespMatrix[iCentBin] = (TH2D*) forUnfolding->Get(Form("FullClsr_RespMatrix_R%d_Cent%s",JetRadius[jet_radius],centBins_2015Meas[iCentBin].c_str()));
       pTDisTruthMatchedJets[iCentBin]= (TH1D*) forUnfolding->Get(Form("R%d_Cent_%s_TruthJetsMatched",JetRadius[jet_radius],centBins_2015Meas[iCentBin].c_str()));
@@ -191,7 +200,8 @@ int UnfoldingJetsCopy(bool Unfoldpp = false, bool UnfoldPbPb = true, int jet_rad
   
   //Grabbing NOT unfolded pT Distributions
   for(int iCentBin=0;iCentBin<number_CentBins; iCentBin++){
-       notUnfolded[iCentBin] = (TH1D*) pTDis_NotUnfolded->Get(Form("R%d_Cent_%s", JetRadius[jet_radius],centBins_2015Meas[iCentBin].c_str()));
+       
+    notUnfolded[iCentBin] = (TH1D*) pTDis_NotUnfolded->Get(Form("R%d_Cent_%s", JetRadius[jet_radius],centBins_2015Meas[iCentBin].c_str()));
   }//Cent Bin Loop
   
   //This is where we will store
@@ -212,9 +222,11 @@ int UnfoldingJetsCopy(bool Unfoldpp = false, bool UnfoldPbPb = true, int jet_rad
   string jetRate2015BinsTag = "";
   if(jetRate2015Bins){
     jetRate2015BinsTag="_JetRate2015Bins";
-  }else if(rAA2015Binning==true){
+  }else if(rAA2015Binning){
     jetRate2015BinsTag = "_2015RAARateBins";
   
+  }else if(dijet2018bins){
+    jetRate2015BinsTag = "_2018DiJetBins";
   }
   string NOMINAL_TAG =""; 
   if(jer_or_jes=="")NOMINAL_TAG = "Nominal";
@@ -227,7 +239,7 @@ int UnfoldingJetsCopy(bool Unfoldpp = false, bool UnfoldPbPb = true, int jet_rad
   
   
   for(int iCentBin =0; iCentBin <number_CentBins; iCentBin++){
-      
+    
       if(Unfoldpp && iCentBin > 0 && regCentBins)continue;
       cout << __LINE__ << endl;
       if(UnfoldPbPb || (Unfoldpp && !regCentBins)){
