@@ -7,7 +7,7 @@
 #include <TCanvas.h>
 #include <TColor.h>
 
-int totalSysUncert(string collisionSys = "pp", int jetYields =-1, int crosssec =0, int jetR = R4, bool debug = false, string nameFile = "2015pTBins_FirstTotSysUncert_pp_R4", bool plot_totalSysUncert = false, bool jetRate2015Bins = true, bool rAA2015pTBins=false, double etaRange_val = 2.8){
+int totalSysUncert(string collisionSys = "pbpbdata", int jetYields =-1, int crosssec =0, int jetR = R4, bool debug = false, string nameFile = "2018pTBins_FirstTotSysUncert_pbpbdata_R4", bool plot_totalSysUncert = false, bool jetRate2015Bins = true, bool rAA2015pTBins=false, bool substrct2018pTBins =true ,double etaRange_val = 2.1){
   const int totCentBins = 8;
   string tagfile = "pbpbdata";
   if(collisionSys=="pp"){
@@ -18,13 +18,17 @@ int totalSysUncert(string collisionSys = "pp", int jetYields =-1, int crosssec =
   string locatn = "";
   string meas2015 = "";
   if(jetRate2015Bins || rAA2015pTBins){
-    locatn = "/Users/berenicegarcia/Desktop/Berenice/Spring_2022/LargeRJets/LargeRJetNewCode/Locally/Systematics/2015Meas/";
-   
+    locatn = "/Users/berenicegarcia/Desktop/Berenice/Spring_2022/LargeRJets/LargeRJetNewCode/Locally/Systematics/2015Meas/"; 
+  }else if(substrct2018pTBins){
+    locatn = "/Users/berenicegarcia/Desktop/Berenice/Spring_2022/LargeRJets/LargeRJetNewCode/Locally/Systematics/2018MeasSys/";
   }
+
   if(jetRate2015Bins){
     meas2015 = "_2015JetRateBins";
   }else if(rAA2015pTBins){
     meas2015 = "_2015RAARateBins";
+  }else if(substrct2018pTBins){
+    meas2015 = "_2018DiJetBins";
   }
   
   TFile *JER_SysUncertFile = new TFile(Form("%ssystematics_%s%s_R%d_JER.root",locatn.c_str(),tagfile.c_str(),meas2015.c_str(),jetRadius[jetR]),"READ");
@@ -94,7 +98,7 @@ int totalSysUncert(string collisionSys = "pp", int jetYields =-1, int crosssec =
 
 
 
-  TFile *TotSysUncer = new TFile(Form("%s.root",nameFile.c_str()),"RECREATE");
+  TFile *TotSysUncer = new TFile(Form("/Users/berenicegarcia/Desktop/Berenice/Spring_2022/LargeRJets/LargeRJetNewCode/Locally/Systematics/2015Meas/totSystematics/%s.root",nameFile.c_str()),"RECREATE");
 
   TH1D *JES_UnsrtTot[num2015MeasBins];
   TH1D *JER_UnsrtTot[num2015MeasBins];
