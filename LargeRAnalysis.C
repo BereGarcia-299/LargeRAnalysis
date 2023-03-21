@@ -36,7 +36,7 @@
 #include "checkMakeDir.C"
 using namespace std;
 
-int LargeRAnalysis(string collisionType = "pp", int jet_Rad = R10,int data_or_mc = mcOrdata::mc,  string extraTag="JES_0", bool debug =false, int sys_uncrt =0, string jer_or_jes_Sys = "JES",bool addpTShapeWeight = true,bool jetRate2015Bins=false, bool rAA2015Binning = false, bool dijet2018bins = false, bool officialLargeRpTBins = true){
+int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_mc = mcOrdata::mc,  string extraTag="MC", bool debug =false, int sys_uncrt =-1, string jer_or_jes_Sys = "",bool addpTShapeWeight = false,bool jetRate2015Bins=false, bool rAA2015Binning = false, bool dijet2018bins = true, bool officialLargeRpTBins = false){
 
   cout << "dijet2018bins: " << dijet2018bins << endl;
   cout << "rAA2015Binning: " << rAA2015Binning << endl;
@@ -171,7 +171,7 @@ int LargeRAnalysis(string collisionType = "pp", int jet_Rad = R10,int data_or_mc
   // cout << "R4/R10 = " << R4 << "/" << R10 << endl;
   
   int pTBinsTotRTruth[2][8] = {{13,14,14,13,13,14,13,13},{22,22,22,19,19,20,19,19}};
-  int pTBinsTotR[2][8] = {{11,12,12,11,11,12,11,11},{20,20,20,17,17,18,17,17}};
+  int pTBinsTotR[2][8] = {{11,12,12,11,11,12,11,11},{22,22,22,19,19,20,19,19}};
   //R=0.4
   //Truth Binning
   std::vector<std::vector<double>> binsR4_Truth;
@@ -291,6 +291,10 @@ int LargeRAnalysis(string collisionType = "pp", int jet_Rad = R10,int data_or_mc
   //Choosing Number of centralities
   std::vector<int> centBins{0,10,20,30,40,50,60,70,80};
   int number_CentBins = centBins.size()-1; 
+
+
+
+
   //int number_CentBins = binsGenR[0].size();
   cout << "Number of cent bins: " << number_CentBins << endl;
   centralityFromInput centTable("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/centrality_cuts_Gv32_proposed_RCMOD2.txt");
@@ -430,22 +434,24 @@ int LargeRAnalysis(string collisionType = "pp", int jet_Rad = R10,int data_or_mc
         numpTBinsTruth = 20;
       }else if(dijet2018bins){
 	array = dijetBins[iCent]; arrayTruth = dijetBins[iCent];
-	numpTBins =18;
-        numpTBinsTruth = 18;
+	numpTBins =dijetBinsTot;
+        numpTBinsTruth = dijetBinsTot;
       }else if(!jetRate2015Bins && !rAA2015Binning && !dijet2018bins){
 	if(jet_Rad == R4){	
 	  array = binsR4.at(iCent).data();
 	  arrayTruth = binsR4_Truth.at(iCent).data();
-      }
+	  numpTBins = binsR4.at(iCent).size()-1;
+	  cout << "TOTAL NUMBER OF BINS FOR RECO: " << numpTBins << endl;
+	  numpTBinsTruth = binsR4_Truth.at(iCent).size()-1;
+	}
 
 	if(jet_Rad == R10){
 	  array = binsR10.at(iCent).data();
 	  arrayTruth = binsR10_Truth.at(iCent).data();
-	
+	  numpTBins = binsR10.at(iCent).size() -1;
+	  numpTBinsTruth = binsR10_Truth.at(iCent).size()-1;
 	}
 
-	numpTBins = pTBinsTotR[jet_Rad][iCent];
-        numpTBinsTruth = pTBinsTotRTruth[jet_Rad][iCent];
       }
        
       if(fakeJets_Study){
@@ -488,7 +494,7 @@ int LargeRAnalysis(string collisionType = "pp", int jet_Rad = R10,int data_or_mc
 	   if(debug)cout << __LINE__ << endl;
 	   pTDisHalvesTruth[iHalf][jet_Rad][iCent]=new TH1D(Form("pTDis%sHalfMatch_TruthJets_R%d%s",tagHalf.c_str(),JetRadius[jet_Rad],centBins_2015Meas[iCent].c_str()),Form("pTDis%sHalfMatch_TruthJets_R%d%s",tagHalf.c_str(),JetRadius[jet_Rad],centBins_2015Meas[iCent].c_str()),numpTBinsTruth,arrayTruth);
 	   if(debug)cout << __LINE__ << endl;
-	   pTDisHalvesReco[iHalf][jet_Rad][iCent]=new TH1D(Form("pTDis%sHalfMatch_RecoJets_R%d%s",tagHalf.c_str(),JetRadius[jet_Rad],centBins_2015Meas[iCent].c_str()),Form("pTDis%sHalfMatch_RecoJets_R%d%s",tagHalf.c_str(),JetRadius[jet_Rad],centBins_2015Meas[iCent].c_str()),numpTBinsTruth,arrayTruth);
+	   pTDisHalvesReco[iHalf][jet_Rad][iCent]=new TH1D(Form("pTDis%sHalfMatch_RecoJets_R%d%s",tagHalf.c_str(),JetRadius[jet_Rad],centBins_2015Meas[iCent].c_str()),Form("pTDis%sHalfMatch_RecoJets_R%d%s",tagHalf.c_str(),JetRadius[jet_Rad],centBins_2015Meas[iCent].c_str()),numpTBins,array);
 	   if(debug)cout << __LINE__ << endl;
 	 }//Looping over halves
 	  	
@@ -728,7 +734,7 @@ int LargeRAnalysis(string collisionType = "pp", int jet_Rad = R10,int data_or_mc
       
       if(iParam == pTPar && sys_uncrt != -1){
 	
-	  jetRecoBranch = Form("akt4hi_etajes_jet_pt_sys_%s_%d",jer_or_jes_Sys.c_str(),sys_uncrt);  
+	jetRecoBranch = Form("akt%dhi_etajes_jet_pt_sys_%s_%d",JetRadius[jet_Rad],jer_or_jes_Sys.c_str(),sys_uncrt);  
 	  cout << "This is the branch you are looking for the systematical uncertainties: " << jetRecoBranch << endl;
       }
 
