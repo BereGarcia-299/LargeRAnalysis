@@ -36,7 +36,7 @@
 #include "checkMakeDir.C"
 using namespace std;
 
-int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_mc = mcOrdata::mc,  string extraTag="MC", bool debug =false, int sys_uncrt =-1, string jer_or_jes_Sys = "",bool addpTShapeWeight = false,bool jetRate2015Bins=false, bool rAA2015Binning = false, bool dijet2018bins = true, bool officialLargeRpTBins = false){
+int LargeRAnalysis(string collisionType = "pp", int jet_Rad = R4,int data_or_mc = mcOrdata::data,  string extraTag="Data", bool debug =false, int sys_uncrt =-1, string jer_or_jes_Sys = "",bool addpTShapeWeight = false,bool jetRate2015Bins=false, bool rAA2015Binning = false, bool dijet2018bins = true, bool officialLargeRpTBins = false){
 
   cout << "dijet2018bins: " << dijet2018bins << endl;
   cout << "rAA2015Binning: " << rAA2015Binning << endl;
@@ -48,8 +48,12 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
   //truth jets matched to reco jets that have passed the sumpT cut. 
   bool sumpTCut_MtchTrthJets = true;
   //ptshape weights info
-  double lowEndCutOff = 100; 
-  double highEndCutOff =300;
+  double lowEndCutOff = 158; 
+  double highEndCutOff =600;
+  
+  
+
+
   cout << "This is the jet radius you will be looking at: " << JetRadius[jet_Rad] << endl;
   
   if((jer_or_jes_Sys == "JER" || jer_or_jes_Sys == "JES") && sys_uncrt != -1) extraTag =Form("%s_%d_",jer_or_jes_Sys.c_str(),sys_uncrt) +extraTag;
@@ -67,6 +71,13 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
   }
   bool matchReq = true;
   if(data_or_mc == mcOrdata::data)matchReq =false;
+
+  
+  //Choosing Number of centralities
+  std::vector<int> centBins{0,10,20,30,40,50,60,70,80};
+  int number_CentBins = centBins.size()-1; 
+  if(dijet2018bins)number_CentBins=4;
+
 
 
   int dataSet = 1; //pp
@@ -180,7 +191,6 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
 
   //R=0.4
   //Truth Binning
-  
   binsR4_Truth.reserve(8);
   binsR4_Truth.emplace_back(std::vector<double>{66,83,100, 117, 138, 158, 178, 199, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120,1300}); //0-10%
   binsR4_Truth.emplace_back(std::vector<double>{66,83,100, 117, 138, 158, 178, 199, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120, 1300}); //10-20%
@@ -201,8 +211,9 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
   binsR4.emplace_back(std::vector<double>{100, 117, 138, 158, 177, 198, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000}); //50-60%
   binsR4.emplace_back(std::vector<double>{100, 117, 138, 158, 177, 197, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 1000}); //60-70%
   binsR4.emplace_back(std::vector<double>{100, 117, 138, 158, 177, 197, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 1000}); //70-80~
-    
+        
 
+  //Reco Binning
   //Reco Binning
   std::vector<std::vector<double>> binsR10;
   binsR10.reserve(8);
@@ -218,14 +229,11 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
   std::vector<std::vector<double>> binsR10_Truth;
   binsR10_Truth.reserve(8);
   binsR10_Truth.emplace_back(std::vector<double>{241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120,1300}); //0-10%
-  binsR10_Truth.emplace_back(std::vector<double>{220 ,241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120, 1300}); //10\
--20%
-  binsR10_Truth.emplace_back(std::vector<double>{211, 228, 245, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120}); //20-\
-30%
+  binsR10_Truth.emplace_back(std::vector<double>{220 ,241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120, 1300}); //10-20%
+  binsR10_Truth.emplace_back(std::vector<double>{211, 228, 245, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 980, 1120}); //20-30%
   binsR10_Truth.emplace_back(std::vector<double>{177, 198, 230, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000}); //30-40%
  binsR10_Truth.emplace_back(std::vector<double>{177,198, 230, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000}); //40-50%
- binsR10_Truth.emplace_back(std::vector<double>{177, 198, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000}); //50-\
-60%
+ binsR10_Truth.emplace_back(std::vector<double>{177, 198, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 857, 1000}); //50-60%
   binsR10_Truth.emplace_back(std::vector<double>{177, 197, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 1000}); //60-70%
  binsR10_Truth.emplace_back(std::vector<double>{177, 197, 220, 241, 262, 294, 336, 384, 439, 502, 573, 656, 750, 1000}); //70-80%
 
@@ -258,21 +266,34 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
 
   cout << binsGenR.size() << " , " << binsGenR[0].size() << endl;
   
-    for(int iCentBin = 0; iCentBin < binsGenR[jet_Rad].size(); iCentBin++){
-      cout << "This is the pT cut for R=" << JetRadius[jet_Rad] << " jets Truth/Reco: " << binsGenRTruth[jet_Rad].at(iCentBin)[0] << "/" << binsGenR[jet_Rad].at(iCentBin)[0] << endl;
-      if(binsGenRTruth[jet_Rad].at(iCentBin)[0] < minpTCuts[jet_Rad])minpTCuts[jet_Rad] = binsGenRTruth[jet_Rad].at(iCentBin)[0];
-      
+  
+  
+  
+   for(int iCentBin = 0; iCentBin < number_CentBins; iCentBin++){
+     //cout << "This is the pT cut for R=" << JetRadius[jet_Rad] << " jets Truth/Reco: " << binsGenRTruth[jet_Rad].at(iCentBin)[0] << "/" << binsGenR[jet_Rad].at(iCentBin)[0] << endl;
+     if(!dijet2018bins&&(binsGenRTruth[jet_Rad].at(iCentBin)[0] < minpTCuts[jet_Rad]))minpTCuts[jet_Rad] = binsGenRTruth[jet_Rad].at(iCentBin)[0];
+     if(dijet2018bins){
+       minpTCuts[jet_Rad] = dijetBins[iCentBin][0];
+     } 
       if(data_or_mc == mc){
 	pTCutsTruth[jet_Rad][iCentBin] = binsGenRTruth[jet_Rad].at(iCentBin)[0];
 	cout << "Truth pT cut: " << pTCutsTruth[jet_Rad][iCentBin] << " for cent Bin: " << iCentBin << " and radius: " << JetRadius[jet_Rad] <<endl;
+	if(dijet2018bins){
+	   pTCutsTruth[jet_Rad][iCentBin] = dijetBins[iCentBin][0];
+	}
+
       }
+
+      
       pTCutsReco[jet_Rad][iCentBin] = binsGenR[jet_Rad].at(iCentBin)[0];
+
+      if(dijet2018bins)pTCutsReco[jet_Rad][iCentBin]=dijetBins[iCentBin][6];
     }//Cent Loop
   
 
   cout << "These are the minimum pT cuts for reconstructed jets: " << minpTCuts[R10] << "/" << minpTCuts[R4] << endl;
 
-  for(int iCentBin =0; iCentBin < 8; iCentBin++){
+  for(int iCentBin =0; iCentBin < number_CentBins; iCentBin++){
     cout << "This is the pT CUt truth jets for R=0.4: " << pTCutsTruth[1][iCentBin] << endl;
     cout << "This is the pT cut reco jets for R=0.4: " << pTCutsReco[1][iCentBin] << endl;
   }
@@ -287,10 +308,6 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
    TH1D *R4_cent0_10TruthMathedJ = new TH1D("R4_cent0_10TruthMathedJ","R4_cent0_10TruthMathedJ",50,0,10000);
    TH1D *R4_cent0_10RecoMathedJ = new TH1D("R4_cent0_10RecoMathedJ","R4_cent0_10RecoMathedJ",50,0,10000);
    TH2D *R4_cent0_10_pTShpWght = new TH2D("R4_cent0_10_pTShpWght","R4_cent0_10_pTShpWght",50,0,1000,50,0,3.5);
-
-  //Choosing Number of centralities
-  std::vector<int> centBins{0,10,20,30,40,50,60,70,80};
-  int number_CentBins = centBins.size()-1; 
 
 
 
@@ -424,6 +441,16 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
       int numpTBins =0;
       int numpTBinsTruth = 0;
 
+      
+      
+       string centBin_strg = "NAN";
+       if(dijet2018bins){
+	   centBin_strg =  centBins_DJ[iCent];
+       }else{
+	    centBin_strg = centBins_2015Meas[iCent];
+       }
+
+
       if(jetRate2015Bins){
 	array = jetRateMC;arrayTruth = jetRateMC;
 	numpTBins =15;
@@ -459,7 +486,10 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
 	pTDis_RJ_cleanTool[jet_Rad] = new TH1D(Form("R%d_RejectedJets_CleanTool",JetRadius[jet_Rad]),Form("R%d_RejectedJets_CleanTool",JetRadius[jet_Rad]),25,0,1800);
         pTDis[jet_Rad][iCent] = new TH1D(Form("R%d_CleanJets",JetRadius[jet_Rad],centBins_2015Meas[iCent].c_str()),Form("R%d_CleanJets",JetRadius[jet_Rad]),25,0,1800);
       }else{
-	pTDis[jet_Rad][iCent] = new TH1D(Form("R%d_Cent_%s",JetRadius[jet_Rad],centBins_2015Meas[iCent].c_str()),Form("R%d_Cent_%s",JetRadius[jet_Rad],centBins_2015Meas[iCent].c_str()),numpTBins,array);
+
+
+
+	pTDis[jet_Rad][iCent] = new TH1D(Form("R%d_Cent_%s",JetRadius[jet_Rad],centBin_strg.c_str()),Form("R%d_Cent_%s",JetRadius[jet_Rad],centBin_strg.c_str()),numpTBins,array);
        
 
       }
@@ -483,28 +513,30 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
       if(data_or_mc == mc){
 	if(full_and_ClsrTst){
 	  if(debug)cout << __LINE__ << endl;
-	  responseMatrix[jet_Rad][iCent]= new TH2D(Form("FullClsr_RespMatrix_R%d_Cent%s",JetRadius[jet_Rad],centBins_2015Meas[iCent].c_str()),Form("FullClsr_RespMatrix_R%d_Cent%s",JetRadius[jet_Rad],centBins_2015Meas[iCent].c_str()),numpTBins,array,numpTBinsTruth,arrayTruth);
+
+
+	  responseMatrix[jet_Rad][iCent]= new TH2D(Form("FullClsr_RespMatrix_R%d_Cent%s",JetRadius[jet_Rad],centBin_strg.c_str()),Form("FullClsr_RespMatrix_R%d_Cent%s",JetRadius[jet_Rad],centBin_strg.c_str()),numpTBins,array,numpTBinsTruth,arrayTruth);
 	  if(debug)cout << __LINE__ << endl;
 	  //this goes into first half 
-	  halfResponseMtx[jet_Rad][iCent]= new TH2D(Form("HalfClsr_RespMatrix_R%d%s",JetRadius[jet_Rad],centBins_2015Meas[iCent].c_str()),Form("HalfClsr_RespMatrix_R%d%s",JetRadius[jet_Rad],centBins_2015Meas[iCent].c_str()),numpTBins,array,numpTBinsTruth,arrayTruth);
+	  halfResponseMtx[jet_Rad][iCent]= new TH2D(Form("HalfClsr_RespMatrix_R%d%s",JetRadius[jet_Rad],centBin_strg.c_str()),Form("HalfClsr_RespMatrix_R%d%s",JetRadius[jet_Rad],centBin_strg.c_str()),numpTBins,array,numpTBinsTruth,arrayTruth);
 	  if(debug)cout << __LINE__ << endl;
 	 for(int iHalf =0; iHalf <  twoHalves; iHalf++){
 	   string tagHalf = "First";
 	   if(iHalf>0)tagHalf = "Secnd";
 	   if(debug)cout << __LINE__ << endl;
-	   pTDisHalvesTruth[iHalf][jet_Rad][iCent]=new TH1D(Form("pTDis%sHalfMatch_TruthJets_R%d%s",tagHalf.c_str(),JetRadius[jet_Rad],centBins_2015Meas[iCent].c_str()),Form("pTDis%sHalfMatch_TruthJets_R%d%s",tagHalf.c_str(),JetRadius[jet_Rad],centBins_2015Meas[iCent].c_str()),numpTBinsTruth,arrayTruth);
+	   pTDisHalvesTruth[iHalf][jet_Rad][iCent]=new TH1D(Form("pTDis%sHalfMatch_TruthJets_R%d%s",tagHalf.c_str(),JetRadius[jet_Rad],centBin_strg.c_str()),Form("pTDis%sHalfMatch_TruthJets_R%d%s",tagHalf.c_str(),JetRadius[jet_Rad],centBin_strg.c_str()),numpTBinsTruth,arrayTruth);
 	   if(debug)cout << __LINE__ << endl;
-	   pTDisHalvesReco[iHalf][jet_Rad][iCent]=new TH1D(Form("pTDis%sHalfMatch_RecoJets_R%d%s",tagHalf.c_str(),JetRadius[jet_Rad],centBins_2015Meas[iCent].c_str()),Form("pTDis%sHalfMatch_RecoJets_R%d%s",tagHalf.c_str(),JetRadius[jet_Rad],centBins_2015Meas[iCent].c_str()),numpTBins,array);
+	   pTDisHalvesReco[iHalf][jet_Rad][iCent]=new TH1D(Form("pTDis%sHalfMatch_RecoJets_R%d%s",tagHalf.c_str(),JetRadius[jet_Rad],centBin_strg.c_str()),Form("pTDis%sHalfMatch_RecoJets_R%d%s",tagHalf.c_str(),JetRadius[jet_Rad],centBin_strg.c_str()),numpTBins,array);
 	   if(debug)cout << __LINE__ << endl;
 	 }//Looping over halves
 	  	
 	}
         if(matchReq){
 	  if(debug)cout << __LINE__ << endl;
-	  pTDisTruth[jet_Rad][iCent] = new TH1D(Form("R%d_Cent_%s_TruthJetsMatched",JetRadius[jet_Rad],centBins_2015Meas[iCent].c_str()),Form("R%d_Cent_%s_TruthJetsMatched",JetRadius[jet_Rad],centBins_2015Meas[iCent].c_str()),numpTBinsTruth,arrayTruth);
+	  pTDisTruth[jet_Rad][iCent] = new TH1D(Form("R%d_Cent_%s_TruthJetsMatched",JetRadius[jet_Rad],centBin_strg.c_str()),Form("R%d_Cent_%s_TruthJetsMatched",JetRadius[jet_Rad],centBin_strg.c_str()),numpTBinsTruth,arrayTruth);
 	  if(debug)cout << __LINE__ << endl;
 	}else if(!matchReq){
-	  pTDisTruth[jet_Rad][iCent] = new TH1D(Form("R%d_Cent_%s_ALLTruthJets",JetRadius[jet_Rad],centBins_2015Meas[iCent].c_str()),Form("R%d_Cent_%s_ALLTruthJets",JetRadius[jet_Rad],centBins_2015Meas[iCent].c_str()),numpTBinsTruth,arrayTruth);
+	  pTDisTruth[jet_Rad][iCent] = new TH1D(Form("R%d_Cent_%s_ALLTruthJets",JetRadius[jet_Rad],centBin_strg.c_str()),Form("R%d_Cent_%s_ALLTruthJets",JetRadius[jet_Rad],centBin_strg.c_str()),numpTBinsTruth,arrayTruth);
 	  
 	}
       }
@@ -527,7 +559,7 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
     if(collisionType == "PbPb"){
       cout <<__LINE__ << endl;
       //tree->Add("/gpfs/mnt/atlasgpfs01/usatlas/data/bereniceg299/user.berenice.05172022.PbPb2018Data_GRL_R10_R4.0000000000_myOutput.root/*.root"); //R=0.4 and R=1.0 jets are in TTrees
-      tree->Add("/gpfs/mnt/atlasgpfs01/usatlas/data/bereniceg299/user.berenice.03132023.LargeRJet_PbPbData_R10_R04_R02_.00000000002_myOutput.root/*.root");
+      tree->Add("/gpfs/mnt/atlasgpfs01/usatlas/data/bereniceg299/Clown/user.berenice.03132023.LargeRJet_PbPbData_R10_R04_R02_.00000000002_myOutput.root/*.root");
       
       cout <<__LINE__ << endl;
       cout << "This is how many entries you have: " << tree->GetEntries() << endl;
@@ -579,18 +611,29 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
   //pT shape weights
   TFile* ptshape_wghtsFile[totRadii];
   TF1 *ptshapeWghts[totRadii][number_CentBins];
-  if(addpTShapeWght){
+  string ptshapeweights_tag = "erf";
+  if(dijet2018bins)ptshapeweights_tag="substructComp";
+if(addpTShapeWght){
     if(collisionType=="PbPb"){
-      ptshape_wghtsFile[R10] = new TFile("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/LargeRAnalysis/pt_shp_wghts/erf_ptshape_weights_pbpb_R10.root","READ");
-      ptshape_wghtsFile[R4] = new TFile("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/LargeRAnalysis/pt_shp_wghts/erf_ptshape_weights_new.root","READ");
+      
+      ptshape_wghtsFile[jet_Rad] = new TFile(Form("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/LargeRAnalysis/pt_shp_wghts/%s_ptshape_weights_pbpb_R%d.root",ptshapeweights_tag.c_str(),JetRadius[jet_Rad]),"READ");
+      
     }else if(collisionType=="pp"){
-      ptshape_wghtsFile[R10] = new TFile("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/LargeRAnalysis/pt_shp_wghts/erf_ptshape_weights_pp_R10.root","READ"); //this is not the correcfile.
-      ptshape_wghtsFile[R4] = new TFile("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/LargeRAnalysis/pt_shp_wghts/erf_ptshape_weights_pp.root","READ");
+      ptshape_wghtsFile[jet_Rad] = new TFile(Form("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/LargeRAnalysis/pt_shp_wghts/%s_ptshape_weights_pp_R%d.root",ptshapeweights_tag.c_str(),JetRadius[jet_Rad]),"READ"); //this is not the correcfile.
+      
     }
 
       
      for(int iCentBin =0; iCentBin < number_CentBins;iCentBin++){
-       ptshapeWghts[jet_Rad][iCentBin] = (TF1*) ptshape_wghtsFile[jet_Rad]->Get(Form("fitfun_ptshape_weights_Cent_%s",centBins_2015Meas[iCentBin].c_str())); 
+
+       string centBin_strg = "NAN";
+       if(dijet2018bins){
+	 centBin_strg =  centBins_DJ[iCentBin];
+       }else{
+	 centBin_strg = centBins_2015Meas[iCentBin];
+       }
+
+       ptshapeWghts[jet_Rad][iCentBin] = (TF1*) ptshape_wghtsFile[jet_Rad]->Get(Form("fitfun_ptshape_weights_Cent_%s",centBin_strg.c_str())); 
      }//pt shape weights
     
     
@@ -767,11 +810,11 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
   if(debug)cout << "THis is the number of entries(): " << tree->GetEntries() << endl;
   int events_tot= tree->GetEntries();
   if(debug)cout << __LINE__ << endl;
-  //events_tot =249974;
+  //events_tot =3249974;
   if(debug)cout << __LINE__ << endl;
   if(debug)cout << "This is the total amount of entries: " << events_tot << endl;
   if(debug)cout << __LINE__ << endl;
-  //events_tot = 909;
+  //events_tot = 5000;
   for(int iEvent = 0; iEvent < events_tot; iEvent++){    
     
     float randomValue = 0;
@@ -889,6 +932,16 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
        if(sumET > 4700)centWeight = centWeightsFunc[jet_Rad]->GetBinContent(centWeightsFunc[jet_Rad]->FindBin(4700)); 
      }
 
+     if(dijet2018bins){
+     
+       if(centBin == centIndex0_10)centBin=0;
+       if(centBin > centIndex0_10 && centBin <= centIndex20_30)centBin=1;
+       if(centBin >= centIndex30_40 && centBin <= centIndex40_50)centBin=2;
+       if(centBin >= centIndex50_60 && centBin <= centIndex70_80)centBin=3;
+
+     }
+     
+  //centIndex30_40,centIndex40_50,centIndex50_60
 
 
 
@@ -1030,8 +1083,11 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
 	      if(debug)cout << "This is the Reco Info! (Index/pT/eta/phi) " << iRecoJet << "/" << akt_jet_kin[jet_Rad][pTPar]->at(iRecoJet) << "/" << akt_jet_kin[jet_Rad][etaPar]->at(iRecoJet) << "/" << akt_jet_kin[jet_Rad][phiPar]->at(iRecoJet) << endl;
 	      if((akt_jet_kin[jet_Rad][etaPar]->at(iRecoJet) > etacut) || (akt_jet_kin[jet_Rad][etaPar]->at(iRecoJet)< -etacut)) continue;
 	      if(debug)cout << "This reco jet passed out eta cut!" <<endl;
-	      if(pTRecoCut > akt_jet_kin[jet_Rad][pTPar]->at(iRecoJet) && collisionType=="PbPb")continue;
+	      if(pTRecoCut > akt_jet_kin[jet_Rad][pTPar]->at(iRecoJet) && collisionType=="PbPb")continue;	    
 	      if(minpTCuts[jet_Rad] >akt_jet_kin[jet_Rad][pTPar]->at(iRecoJet) && collisionType == "pp")continue;
+
+	      //Dhanush had an upper cut at 1TeV
+	      if(dijet2018bins && (akt_jet_kin[jet_Rad][pTPar]->at(iRecoJet) > 1000))continue;
 
 	      if(debug){
 		cout <<"This reco jet PASEED PT CUT! " << endl;
@@ -1228,18 +1284,19 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
 	  if(debug)cout << "if its < 0 then we must move on top next jet! " << endl;
 	  if (truth_index < 0) continue;
 	  double ptShpWeight = 1.0;
+	  double ptShpWeight_2D =1.0;
 	  if(addpTShapeWght){
 	       
-	       if(akt_truth_jet_kin[jet_Rad][pTPar]->at(truth_index)< lowEndCutOff){
+	       if(akt_truth_jet_kin[jet_Rad][pTPar]->at(truth_index) < lowEndCutOff){
 		  ptShpWeight=ptshapeWghts[jet_Rad][centBin]->Eval(lowEndCutOff); 
 	       }else if(akt_truth_jet_kin[jet_Rad][pTPar]->at(truth_index) > highEndCutOff){
 		 ptShpWeight=ptshapeWghts[jet_Rad][centBin]->Eval(highEndCutOff);
 	       }else{		
 		  ptShpWeight=ptshapeWghts[jet_Rad][centBin]->Eval(akt_truth_jet_kin[jet_Rad][pTPar]->at(truth_index)); //instead of inputing reco we input truth
 		  //if(centBin==0 && akt_truth_jet_kin[jet_Rad][pTPar]->at(truth_index) < 70)cout << "This is the value of ptShpWeight: " << ptShpWeight << endl;
-		}
-	      }
+	       }
 
+	  }
 	  
 	  if(UniqueMatchToTrthJet[truth_index]==false){
 	    //cout << "Guess not! This truth jet can no longer be matched to a reco jet." << endl;
@@ -1257,7 +1314,11 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
 		cout << "This is the pT shape weight: " << ptShpWeight << endl;
 		}
 		
-	      pTDisTruth[jet_Rad][centBin]->Fill(akt_truth_jet_kin[jet_Rad][pTPar]->at(truth_index),centWeight*jZweight*ptShpWeight);
+	       
+		  pTDisTruth[jet_Rad][centBin]->Fill(akt_truth_jet_kin[jet_Rad][pTPar]->at(truth_index),centWeight*jZweight*ptShpWeight);
+		
+		
+
 	      if(centBin==0 && jet_Rad==1 && akt_truth_jet_kin[jet_Rad][pTPar]->at(truth_index) < 268){
 		//cout << "This is the pT of your matched jet: " << akt_truth_jet_kin[jet_Rad][pTPar]->at(truth_index) << endl;
 		// cout << "This is the pT of the reco jet matched: " << akt_jet_kin[jet_Rad][pTPar]->at(iJetReco) << endl;
@@ -1322,6 +1383,8 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
 		// cout << "dR(44Truth, 105Reco): " << deltaRNum << endl;
 	      for(int iCentBin =0; iCentBin < number_CentBins; iCentBin++){
 		if(pTCutsReco[jet_Rad][iCentBin] > akt_jet_kin[jet_Rad][pTPar]->at(iJetReco))continue;
+		if(dijet2018bins && (akt_jet_kin[jet_Rad][pTPar]->at(iJetReco)>1000))continue;
+
 	        if(pTCutsTruth[jet_Rad][iCentBin]> akt_truth_jet_kin[jet_Rad][pTPar]->at(truth_index))continue;
 		
 	     
@@ -1528,6 +1591,10 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
             if(debug)cout << __LINE__ << endl;
 	    if(debug)cout << "This is the pT of the reco jet: " << akt_jet_kin[jet_Rad][pTPar]->at(iJetReco) << endl;
 	    if(akt_jet_kin[jet_Rad][pTPar]->at(iJetReco) < pTCutsReco[jet_Rad][iCentBin])continue;
+
+	    //Dhanush had an upper cut at 1TeV
+	    if(dijet2018bins && (akt_jet_kin[jet_Rad][pTPar]->at(iJetReco) > 1000))continue;
+
 	    if(debug)cout << "This is the pT cut that the jet had to pass: " << pTCutsReco[jet_Rad][iCentBin] << endl;
 	    if(debug)cout << "This reco jet passed the minumum pT cut!" << endl; 
 	    if(debug)cout << __LINE__ << endl;
@@ -1583,17 +1650,29 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
 
 		}
 		double ptShpWeight = 1.0;
+		double ptShpWeight_2D = 1.0;
 		if(addpTShapeWght){
-		  if(akt_truth_jet_kin[jet_Rad][pTPar]->at(truthmatch)< 100){
-		    ptShpWeight=ptshapeWghts[jet_Rad][centBin]->Eval(101); 
+		  if(akt_truth_jet_kin[jet_Rad][pTPar]->at(truthmatch)< lowEndCutOff){
+		    ptShpWeight=ptshapeWghts[jet_Rad][centBin]->Eval(lowEndCutOff+1);
+		  }else if(akt_truth_jet_kin[jet_Rad][pTPar]->at(truthmatch) > highEndCutOff){ 
+		    ptShpWeight=ptshapeWghts[jet_Rad][centBin]->Eval(lowEndCutOff-1);
 		  }else{		
 		    ptShpWeight=ptshapeWghts[jet_Rad][centBin]->Eval(akt_truth_jet_kin[jet_Rad][pTPar]->at(truthmatch)); //instead of inputing reco we input truth
-		    //if(centBin==0 && akt_truth_jet_kin[jet_Rad][pTPar]->at(truth_index) < 70)cout << "This is the value of ptShpWeight: " << ptShpWeight << endl;
+	
 		  }
-		}
-
+		  if(akt_jet_kin[jet_Rad][pTPar]->at(iJetReco)< lowEndCutOff){
+		    ptShpWeight_2D=ptshapeWghts[jet_Rad][centBin]->Eval(lowEndCutOff+1);
+		  }else if(akt_jet_kin[jet_Rad][pTPar]->at(iJetReco) > highEndCutOff){
+		    ptShpWeight_2D=ptshapeWghts[jet_Rad][centBin]->Eval(lowEndCutOff-1);
+		  }else{
+		    ptShpWeight_2D=ptshapeWghts[jet_Rad][centBin]->Eval(akt_jet_kin[jet_Rad][pTPar]->at(iJetReco));
+		  }
+		  
 		
+		}
+	       
 		pTDisTruth[jet_Rad][iCentBin]->Fill(akt_truth_jet_kin[jet_Rad][pTPar]->at(truthmatch),jZweight*ptShpWeight);
+		
 		if(full_and_ClsrTst)responseMatrix[jet_Rad][iCentBin]->Fill(akt_jet_kin[jet_Rad][pTPar]->at(iJetReco),akt_truth_jet_kin[jet_Rad][pTPar]->at(truthmatch),jZweight*ptShpWeight);//Resp. Mtx. Full Closure Test
 		
 		pTDis[jet_Rad][iCentBin]->Fill(akt_jet_kin[jet_Rad][pTPar]->at(iJetReco),jZweight*ptShpWeight);
@@ -1647,6 +1726,8 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
 	  if(debug)cout << __LINE__ << endl;
           if(debug)cout << "This  is the iJetReco value: " << iJetReco << endl;
 	  if(akt_jet_kin[jet_Rad][pTPar]->at(iJetReco) < pTCutsReco[jet_Rad][centBin])continue;
+	  if(dijet2018bins && (akt_jet_kin[jet_Rad][pTPar]->at(iJetReco)>1000))continue;
+
 	  if(debug)cout << __LINE__ << endl;
 	  if(debug)cout << "This is event number" << iEvent << endl;
 	  if(debug)cout << "This is the pT reco that was matched(Radius/Index/pT/eta/phi): " << jet_Rad<< "/" <<iJetReco << "/" << akt_jet_kin[jet_Rad][pTPar]->at(iJetReco) << "/" << akt_jet_kin[jet_Rad][etaPar]->at(iJetReco) << "/" << akt_jet_kin[jet_Rad][phiPar]->at(iJetReco) << endl;
