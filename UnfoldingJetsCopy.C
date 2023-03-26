@@ -18,7 +18,7 @@
 #include <TPaveText.h>
 #include "TLorentzVector.h"
 #include "bFunctions.h"
-#include "NewTreeVariables.h"
+#include "bNec.h"
 #include <TSystem.h>
 //#include "ncollFunctions_5TeV.h"
 #include "RooUnfoldResponse.h"
@@ -28,7 +28,10 @@
 
 using namespace std;
 
-int UnfoldingJetsCopy(bool Unfoldpp = true, bool UnfoldPbPb = false,bool testUnfoldingPro = false, int jet_radius = R4,bool regCentBins = false,int numIter = 17, int etaRange = 21, int uncrt_sys = -1, string jer_or_jes = "",bool systematicUnfd = false, bool jetRate2015Bins = false,bool rAA2015Binning = false, bool dijet2018bins = true){
+int UnfoldingJetsCopy(bool Unfoldpp = true, bool UnfoldPbPb = false,bool Inefficciency_Corr = true,bool testUnfoldingPro = false, int jet_radius = R4,bool regCentBins = false,int numIter = 17, int etaRange = 21, int uncrt_sys = -1, string jer_or_jes = "",bool systematicUnfd = false, bool jetRate2015Bins = false,bool rAA2015Binning = false, bool dijet2018bins = true, bool officialLargeRpTBins = false,bool NopTShapeWeight=false,bool NoCentWeight = false){
+
+  bool matchbins = false;
+
 
   //We set pp_Or_PbPb to true if unfolding Pb+Pb Data
   string pp_or_PbPb = "ppData" ;
@@ -51,6 +54,8 @@ int UnfoldingJetsCopy(bool Unfoldpp = true, bool UnfoldPbPb = false,bool testUnf
     index_CentBinnning = 1;
   }
    
+  if(dijet2018bins)number_CentBins=4;
+
   cout << "Total number of cent bins: " << number_CentBins << endl;
   
 
@@ -64,17 +69,22 @@ int UnfoldingJetsCopy(bool Unfoldpp = true, bool UnfoldPbPb = false,bool testUnf
     location=Form("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/2015CentBinsFiles/rAABins_%s/",colsnSys.c_str());
   }else if(dijet2018bins){
     location = Form("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/DijetBinning/%s/",colsnSys.c_str());    
-  }
+ }else if(officialLargeRpTBins && etaRange ==21){
+   location = Form("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/largeR2018/%s/",colsnSys.c_str());
+ }else if(officialLargeRpTBins && etaRange==15){
+  location = Form("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/NominalDir/R_%d/%s/",JetRadius[jet_radius],colsnSys.c_str());
+ }
 
-  if(jer_or_jes==""){
+  if(jer_or_jes=="" && !NopTShapeWeight && !NoCentWeight){
     location = location + "nominal/";
-  }else if(jer_or_jes!=""){
+  }else if(jer_or_jes!="" || NoCentWeight || NopTShapeWeight){
     location = location + "Unfolded/";
   }
     //These will contain necessary
   //histograms for the unfolding procedure 
   TFile *forUnfolding = NULL;
   
+
   //pT Distributions that Need Unfolding
   TFile *pTDis_NotUnfolded = NULL;
   
@@ -95,6 +105,13 @@ int UnfoldingJetsCopy(bool Unfoldpp = true, bool UnfoldPbPb = false,bool testUnf
   }else if(dijet2018bins){
     location_of_dataFile = Form("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/DijetBinning/%s",colsnSys.c_str());
     location_of_mcFile = Form("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/DijetBinning/%s",colsnSys.c_str());
+  }else if(officialLargeRpTBins && etacut ==2.1){
+    location_of_dataFile=Form("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/largeR2018/%s",colsnSys.c_str());
+    location_of_mcFile = Form("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/largeR2018/%s",colsnSys.c_str());
+  }else if(officialLargeRpTBins && etacut ==1.5){
+    location_of_dataFile=Form("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/NominalDir/R_%d/%s/",JetRadius[jet_radius],colsnSys.c_str());
+    location_of_mcFile = Form("/usatlas/u/bereniceg299/data/LargeRJet_Study/NewSourceCode/NominalDir/R_%d/%s/",JetRadius[jet_radius],colsnSys.c_str());
+    
   }
 
 
@@ -116,20 +133,26 @@ int UnfoldingJetsCopy(bool Unfoldpp = true, bool UnfoldPbPb = false,bool testUnf
   }else if(dijet2018bins){
     mc_tag = "_2018DiJetBins" + mc_tag;
     data_tag = "_2018DiJetBins" + data_tag;
+  }else if(officialLargeRpTBins){
+    mc_tag = "_2018LargerAnalysis" + mc_tag;
+    data_tag = "_2018LargerAnalysis" + data_tag;
   }
 
   data_tag = "_NopTShpWghts"+ data_tag;
-  if(jer_or_jes == "Unfolding")mc_tag = "_NopTShpWghts" + mc_tag;
+  if(jer_or_jes == "Unfolding" || NopTShapeWeight)mc_tag = "_NopTShpWghts" + mc_tag;
   
 
   mc_tag = Form("RawHistograms_R%d_%s",JetRadius[jet_radius],colsnSys.c_str()) + mc_tag;
+  
+  //mc_tag="RawHistograms_R4_PbPb_2018DiJetBins_eta21_v0_MC";
   if(!testUnfoldingPro){
     //You will unfold data
     data_tag = Form("RawHistograms_R%d_%s",JetRadius[jet_radius],colsnSys.c_str()) + data_tag;
   }else if(testUnfoldingPro){
     //You wil unfold MC Reco jets
     data_tag = mc_tag;
-  
+    if(matchbins)data_tag = "RawHistograms_R4_PbPb_NopTShpWghts_2018LargerAnalysis_eta15_MatchTruthAndRecopTBins_MC";
+
   }
   std::ofstream file("name_files_used.txt"); // open text file  
 
@@ -200,19 +223,40 @@ int UnfoldingJetsCopy(bool Unfoldpp = true, bool UnfoldPbPb = false,bool testUnf
 
 
 
+
+
   for(int iCentBin=0;iCentBin < number_CentBins; iCentBin++){
+
+
+    string centBin_strg = "NAN";
+    if(dijet2018bins){
+      centBin_strg =  centBins_DJ[iCentBin];
+    }else{
+      centBin_strg = centBins_2015Meas[iCentBin];
+    }
+
+
       
-      pTDisRecoMatchedJets[iCentBin] = (TH1D*) forUnfolding->Get(Form("R%d_Cent_%s",JetRadius[jet_radius],centBins_2015Meas[iCentBin].c_str()));
-      RespMatrix[iCentBin] = (TH2D*) forUnfolding->Get(Form("FullClsr_RespMatrix_R%d_Cent%s",JetRadius[jet_radius],centBins_2015Meas[iCentBin].c_str()));
-      pTDisTruthMatchedJets[iCentBin]= (TH1D*) forUnfolding->Get(Form("R%d_Cent_%s_TruthJetsMatched",JetRadius[jet_radius],centBins_2015Meas[iCentBin].c_str()));
+      pTDisRecoMatchedJets[iCentBin] = (TH1D*) forUnfolding->Get(Form("R%d_Cent_%s",JetRadius[jet_radius],centBin_strg.c_str()));
+      cout << "THis is for iCentbin:" << iCentBin << endl;
+      cout << "Histo: " << Form("R%d_Cent_%s",JetRadius[jet_radius],centBin_strg.c_str()) << endl;
+      
+      RespMatrix[iCentBin] = (TH2D*) forUnfolding->Get(Form("FullClsr_RespMatrix_R%d_Cent%s",JetRadius[jet_radius],centBin_strg.c_str()));
+
+      if(!Inefficciency_Corr){
+	pTDisTruthMatchedJets[iCentBin]= (TH1D*) forUnfolding->Get(Form("R%d_Cent_%s_TruthJetsMatched",JetRadius[jet_radius],centBin_strg.c_str()));
+	
+      }else{
+	pTDisTruthMatchedJets[iCentBin]= (TH1D*) forUnfolding->Get(Form("R%d_Cent_%s_AllTruthJets",JetRadius[jet_radius],centBin_strg.c_str()));
+      }
 
       if(testUnfoldingPro){
-	cout << "Grabbing this histos: " << Form("pTDisFirstHalfMatch_RecoJets_R%d%s",JetRadius[jet_radius],centBins_2015Meas[iCentBin].c_str()) << endl;
-	cout << "Grab this histo: " << Form("HalfClsr_RespMatrix_R%d%s",JetRadius[jet_radius],centBins_2015Meas[iCentBin].c_str()) << endl;
-	cout << "grab: " << Form("pTDisFirstHalfMatch_TruthJets_R%d%s",JetRadius[jet_radius],centBins_2015Meas[iCentBin].c_str()) << endl;
-	pTDisRecoMatchedJets_HC[iCentBin] = (TH1D*) forUnfolding->Get(Form("pTDisFirstHalfMatch_RecoJets_R%d%s",JetRadius[jet_radius],centBins_2015Meas[iCentBin].c_str()));
-	RespMatrix_HC[iCentBin] = (TH2D*) forUnfolding->Get(Form("HalfClsr_RespMatrix_R%d%s",JetRadius[jet_radius],centBins_2015Meas[iCentBin].c_str()));
-	pTDisTruthMatchedJets_HC[iCentBin]= (TH1D*) forUnfolding->Get(Form("pTDisFirstHalfMatch_TruthJets_R%d%s",JetRadius[jet_radius],centBins_2015Meas[iCentBin].c_str()));
+	cout << "Grabbing this histos: " << Form("pTDisFirstHalfMatch_RecoJets_R%d%s",JetRadius[jet_radius],centBin_strg.c_str()) << endl;
+	cout << "Grab this histo: " << Form("HalfClsr_RespMatrix_R%d%s",JetRadius[jet_radius],centBin_strg.c_str()) << endl;
+	cout << "grab: " << Form("pTDisFirstHalfMatch_TruthJets_R%d%s",JetRadius[jet_radius],centBin_strg.c_str()) << endl;
+	pTDisRecoMatchedJets_HC[iCentBin] = (TH1D*) forUnfolding->Get(Form("pTDisFirstHalfMatch_RecoJets_R%d%s",JetRadius[jet_radius],centBin_strg.c_str()));
+	RespMatrix_HC[iCentBin] = (TH2D*) forUnfolding->Get(Form("HalfClsr_RespMatrix_R%d%s",JetRadius[jet_radius],centBin_strg.c_str()));
+	pTDisTruthMatchedJets_HC[iCentBin]= (TH1D*) forUnfolding->Get(Form("pTDisFirstHalfMatch_TruthJets_R%d%s",JetRadius[jet_radius],centBin_strg.c_str()));
       }
       
 
@@ -224,10 +268,18 @@ int UnfoldingJetsCopy(bool Unfoldpp = true, bool UnfoldPbPb = false,bool testUnf
   
   //Grabbing NOT unfolded pT Distributions
   for(int iCentBin=0;iCentBin<number_CentBins; iCentBin++){
+    string centBin_strg = "NAN";
+    if(dijet2018bins){
+      centBin_strg =  centBins_DJ[iCentBin];
+    }else{
+      centBin_strg = centBins_2015Meas[iCentBin];
+    }
+
+
        
-    notUnfolded[iCentBin] = (TH1D*) pTDis_NotUnfolded->Get(Form("R%d_Cent_%s", JetRadius[jet_radius],centBins_2015Meas[iCentBin].c_str()));
+    notUnfolded[iCentBin] = (TH1D*) pTDis_NotUnfolded->Get(Form("R%d_Cent_%s", JetRadius[jet_radius],centBin_strg.c_str()));
     if(testUnfoldingPro){
-      notUnfolded_HC[iCentBin] = (TH1D*) pTDis_NotUnfolded->Get(Form("pTDisSecndHalfMatch_RecoJets_R%d%s", JetRadius[jet_radius],centBins_2015Meas[iCentBin].c_str()));
+      notUnfolded_HC[iCentBin] = (TH1D*) pTDis_NotUnfolded->Get(Form("pTDisSecndHalfMatch_RecoJets_R%d%s", JetRadius[jet_radius],centBin_strg.c_str()));
     }
 
   }//Cent Bin Loop
@@ -256,19 +308,44 @@ int UnfoldingJetsCopy(bool Unfoldpp = true, bool UnfoldPbPb = false,bool testUnf
   
   }else if(dijet2018bins){
     jetRate2015BinsTag = "_2018DiJetBins";
+  }else if(officialLargeRpTBins){
+    jetRate2015BinsTag = "_2018LargerAnalysis";
   }
+
+  string NocentWeight_tag = "";
+  if(NoCentWeight){
+    NocentWeight_tag= "_NoCentWghts";
+  }
+
+  string NopTShpWghts_tag ="";
+  if(NopTShapeWeight){
+    NopTShpWghts_tag = "_NopTShpWght";
+  }
+    
+
+
   string NOMINAL_TAG =""; 
-  if(jer_or_jes=="" && !testUnfoldingPro)NOMINAL_TAG = "Nominal";
+  if(jer_or_jes=="" && !testUnfoldingPro && !NoCentWeight && !NopTShapeWeight)NOMINAL_TAG = "Nominal";
   if(testUnfoldingPro)NOMINAL_TAG = "_UnfoldingProcedureTEST";
   cout << "*******This is the file where we will save everything: " << Form("%shist_26282548_05302022_Unfolded_%s_ATLAS_Official_RAA_Binning_17Iters_10000Toys%s%s%s%s_etaRange%d%s.root***",location.c_str(),pp_or_PbPb.c_str(),uncertSys.c_str(),ptShapeAppliedMatriciesTag.c_str(),unfoldSystematic.c_str(),jetRate2015BinsTag.c_str(),etaRange,NOMINAL_TAG.c_str());
   
-  TFile *pTDisUnfold_File = new TFile(Form("%shist_26282548_05302022_Unfolded_%s_ATLAS_Official_RAA_Binning_17Iters_10000Toys%s%s%s%s_etaRange%d%s.root",location.c_str(),pp_or_PbPb.c_str(),uncertSys.c_str(),ptShapeAppliedMatriciesTag.c_str(),unfoldSystematic.c_str(),jetRate2015BinsTag.c_str(),etaRange,NOMINAL_TAG.c_str()),"RECREATE"); //ATLAS RAA Binning
+  TFile *pTDisUnfold_File = new TFile(Form("%shist_26282548_05302022_Unfolded_%s_ATLAS_Official_RAA_Binning_17Iters_10000Toys%s%s%s%s_etaRange%d%s%s%s_R%d.root",location.c_str(),pp_or_PbPb.c_str(),uncertSys.c_str(),ptShapeAppliedMatriciesTag.c_str(),unfoldSystematic.c_str(),jetRate2015BinsTag.c_str(),etaRange,NOMINAL_TAG.c_str(),NocentWeight_tag.c_str(),NopTShpWghts_tag.c_str(),JetRadius[jet_radius]),"RECREATE"); //ATLAS RAA Binning
   
   string centBins = "NoCentBins";
   
   
   for(int iCentBin =0; iCentBin <number_CentBins; iCentBin++){
     
+    string centBin_strg = "NAN";
+    if(dijet2018bins){
+      centBin_strg =  centBins_DJ[iCentBin];
+    }else{
+      centBin_strg = centBins_2015Meas[iCentBin];
+    }
+
+
+
+
       if(Unfoldpp && iCentBin > 0 && regCentBins)continue;
       cout << __LINE__ << endl;
       if(UnfoldPbPb || (Unfoldpp && !regCentBins)){
@@ -279,81 +356,86 @@ int UnfoldingJetsCopy(bool Unfoldpp = true, bool UnfoldPbPb = false,bool testUnf
       RooUnfoldResponse *unf_R = nullptr;
       RooUnfoldResponse *unf_R_HC = nullptr;
       cout << __LINE__ << endl;
+      cout << "iCentBin: " << iCentBin << endl;
       pTDisRecoMatchedJets[iCentBin]->SetMarkerColor(kRed);
       cout << __LINE__ << endl;
       pTDisTruthMatchedJets[iCentBin]->SetMarkerColor(kBlue);
       cout << __LINE__ << endl;
+
       unf_R = new RooUnfoldResponse(pTDisRecoMatchedJets[iCentBin],pTDisTruthMatchedJets[iCentBin],RespMatrix[iCentBin]);
+      cout << __LINE__ << endl;
+
+
       if(testUnfoldingPro){
-	cout << __LINE__ << endl;
-	pTDisRecoMatchedJets_HC[iCentBin]->SetMarkerColor(kRed);
-	cout << __LINE__ << endl;
-	pTDisTruthMatchedJets_HC[iCentBin]->SetMarkerColor(kRed);
-	cout << __LINE__ << endl;
-	RespMatrix_HC[iCentBin]->Draw("colz");
-	cout << __LINE__ << endl;
-	unf_R_HC = new RooUnfoldResponse(pTDisRecoMatchedJets_HC[iCentBin],pTDisTruthMatchedJets_HC[iCentBin],RespMatrix_HC[iCentBin]);
-	cout << __LINE__ << endl;
+      	cout << __LINE__ << endl;
+      	pTDisRecoMatchedJets_HC[iCentBin]->SetMarkerColor(kRed);
+      	cout << __LINE__ << endl;
+      	pTDisTruthMatchedJets_HC[iCentBin]->SetMarkerColor(kRed);
+       
+      	RespMatrix_HC[iCentBin]->Draw("colz");
+      	cout << __LINE__ << endl;
+      	unf_R_HC = new RooUnfoldResponse(pTDisRecoMatchedJets_HC[iCentBin],pTDisTruthMatchedJets_HC[iCentBin],RespMatrix_HC[iCentBin]);
+      	cout << __LINE__ << endl;
       }
       cout << __LINE__ << endl;
       for(int iIter = 0; iIter < numIter; iIter++){
-	cout << __LINE__ << endl;
-	RooUnfoldBayes *rooUnfold_Data = nullptr;
-	cout << __LINE__ << endl;
-	RooUnfoldBayes *rooUnfold_Data_HC = nullptr;
-	rooUnfold_Data = new RooUnfoldBayes(unf_R,notUnfolded[iCentBin], iIter);
-	cout << __LINE__ << endl;
+      	cout << __LINE__ << endl;
+      	RooUnfoldBayes *rooUnfold_Data = nullptr;
+      	cout << __LINE__ << endl;
+      	RooUnfoldBayes *rooUnfold_Data_HC = nullptr;
+      	rooUnfold_Data = new RooUnfoldBayes(unf_R,notUnfolded[iCentBin], iIter);
+      	cout << __LINE__ << endl;
 	
-	if(testUnfoldingPro){
-	    rooUnfold_Data_HC = new RooUnfoldBayes(unf_R_HC,notUnfolded_HC[iCentBin], iIter);
-	    rooUnfold_Data_HC->SetNToys(nToys);
-	 }
+      	if(testUnfoldingPro){
+      	    rooUnfold_Data_HC = new RooUnfoldBayes(unf_R_HC,notUnfolded_HC[iCentBin], iIter);
+      	    rooUnfold_Data_HC->SetNToys(nToys);
+      	 }
 
-	if(!systematicUnfd){
-	  rooUnfold_Data->SetNToys(nToys);
+      	if(!systematicUnfd){
+      	  rooUnfold_Data->SetNToys(nToys);
 	  
-	}
-	cout << __LINE__ << endl;
-	if(systematicUnfd){
-	  rooUnfold_Data->SetNToys(50);
-	  rooUnfold_Data->IncludeSystematics(2);
+      	}
+      	cout << __LINE__ << endl;
+      	if(systematicUnfd){
+      	  rooUnfold_Data->SetNToys(50);
+      	  rooUnfold_Data->IncludeSystematics(2);
 	  
-	}
-	cout << __LINE__ << endl;
-	 TH1D *unfolded_Data = nullptr;
-	 TH1D *unfolded_Data_HC = nullptr;
-	 cout << __LINE__ << endl;
-	if(!systematicUnfd){
-	  cout << __LINE__ << endl;
-	  unfolded_Data = (TH1D*) rooUnfold_Data->Hreco(RooUnfold::kCovToy);
+      	}
+      	cout << __LINE__ << endl;
+      	 TH1D *unfolded_Data = nullptr;
+      	 TH1D *unfolded_Data_HC = nullptr;
+      	 cout << __LINE__ << endl;
+      	if(!systematicUnfd){
+      	  cout << __LINE__ << endl;
+      	  unfolded_Data = (TH1D*) rooUnfold_Data->Hreco(RooUnfold::kCovToy);
 	  
-	  if(testUnfoldingPro){
-	    cout << __LINE__ << endl;
-	    unfolded_Data_HC = (TH1D*) rooUnfold_Data_HC->Hreco(RooUnfold::kCovToy);
-	    cout << __LINE__ << endl;
-	    rooUnfold_Data_HC->Hreco(RooUnfold::kCovToy);
-	    cout << __LINE__ << endl;
-	  }
-	  cout << __LINE__ << endl;
-	}
-	if(systematicUnfd)unfolded_Data = (TH1D*) rooUnfold_Data->Hreco(RooUnfold::ErrorTreatment::kCovToy);
-	if(!testUnfoldingPro){
-	  cout << __LINE__ << endl;
-	  unfolded_Data->Write(Form("Unfolded_%s_R%d_%dIter_%s",pp_or_PbPb.c_str(),JetRadius[jet_radius],iIter,centBins.c_str()),TObject::kOverwrite);
-	  unfolded_Data = nullptr;
-	}else if(testUnfoldingPro){
-	  cout << __LINE__ << endl;
-	  unfolded_Data->Write(Form("pTDisUnfold_Full_R%d_%dIter_Cent%s",JetRadius[jet_radius],iIter,centBins.c_str()),TObject::kOverwrite);
+      	  if(testUnfoldingPro){
+      	    cout << __LINE__ << endl;
+      	    unfolded_Data_HC = (TH1D*) rooUnfold_Data_HC->Hreco(RooUnfold::kCovToy);
+      	    cout << __LINE__ << endl;
+      	    rooUnfold_Data_HC->Hreco(RooUnfold::kCovToy);
+      	    cout << __LINE__ << endl;
+      	  }
+      	  cout << __LINE__ << endl;
+      	}
+      	if(systematicUnfd)unfolded_Data = (TH1D*) rooUnfold_Data->Hreco(RooUnfold::ErrorTreatment::kCovToy);
+      	if(!testUnfoldingPro){
+      	  cout << __LINE__ << endl;
+      	  unfolded_Data->Write(Form("Unfolded_%s_R%d_%dIter_%s",pp_or_PbPb.c_str(),JetRadius[jet_radius],iIter,centBin_strg.c_str()),TObject::kOverwrite);
+      	  unfolded_Data = nullptr;
+      	}else if(testUnfoldingPro){
+      	  cout << __LINE__ << endl;
+      	  unfolded_Data->Write(Form("pTDisUnfold_Full_R%d_%dIter_Cent%s",JetRadius[jet_radius],iIter,centBin_strg.c_str()),TObject::kOverwrite);
           unfolded_Data = nullptr;
-	  cout << __LINE__ << endl;
-	  unfolded_Data_HC->Write(Form("pTDisUnfold_Half_R%d_%dIter_Cent%s",JetRadius[jet_radius],iIter,centBins.c_str()),TObject::kOverwrite);
-	  unfolded_Data_HC = nullptr;
-	  cout << __LINE__ << endl;
+      	  cout << __LINE__ << endl;
+      	  unfolded_Data_HC->Write(Form("pTDisUnfold_Half_R%d_%dIter_Cent%s",JetRadius[jet_radius],iIter,centBin_strg.c_str()),TObject::kOverwrite);
+      	  unfolded_Data_HC = nullptr;
+      	  cout << __LINE__ << endl;
 	  
-	}
+      }
       }//CentBin Loop
       
-    }//Jet
+  }//Jet
     
 
   pTDis_NotUnfolded->Close();
