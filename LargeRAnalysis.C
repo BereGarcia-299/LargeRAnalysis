@@ -36,7 +36,7 @@
 #include "checkMakeDir.C"
 using namespace std;
 
-int LargeRAnalysis(string collisionType = "pp", int jet_Rad = R4,int data_or_mc = mcOrdata::data,  string extraTag="Data", bool debug =false, int sys_uncrt =-1, string jer_or_jes_Sys = "",bool addpTShapeWeight = false,bool jetRate2015Bins=false, bool rAA2015Binning = false, bool dijet2018bins = true, bool officialLargeRpTBins = false){
+int LargeRAnalysis(string collisionType = "pp", int jet_Rad = R4,int data_or_mc = mcOrdata::mc,  string extraTag="MC", bool debug =false, int sys_uncrt =-1, string jer_or_jes_Sys = "",bool addpTShapeWeight = true,bool jetRate2015Bins=false, bool rAA2015Binning = false, bool dijet2018bins = true, bool officialLargeRpTBins = false){
 
   cout << "dijet2018bins: " << dijet2018bins << endl;
   cout << "rAA2015Binning: " << rAA2015Binning << endl;
@@ -326,7 +326,9 @@ int LargeRAnalysis(string collisionType = "pp", int jet_Rad = R4,int data_or_mc 
   TH1D *pTDis_JZSamples[totRadii][total_samples][2]; //0 is for truth and 1 is reco
   TH1D* pTDis[totRadii][number_CentBins];
   TH1D *pTDisTruth[totRadii][number_CentBins];
-  
+  TH1D *pTDisTruth_All[totRadii][number_CentBins];
+
+
   //SumET Distribution
   TH1D* sumETDisData[totRadii];
   TH1D* pTLeadJet_R10[totRadii][number_CentBins];
@@ -534,6 +536,8 @@ int LargeRAnalysis(string collisionType = "pp", int jet_Rad = R4,int data_or_mc 
         if(matchReq){
 	  if(debug)cout << __LINE__ << endl;
 	  pTDisTruth[jet_Rad][iCent] = new TH1D(Form("R%d_Cent_%s_TruthJetsMatched",JetRadius[jet_Rad],centBin_strg.c_str()),Form("R%d_Cent_%s_TruthJetsMatched",JetRadius[jet_Rad],centBin_strg.c_str()),numpTBinsTruth,arrayTruth);
+	  pTDisTruth_All[jet_Rad][iCent] = new TH1D(Form("R%d_Cent_%s_AllTruthJets",JetRadius[jet_Rad],centBin_strg.c_str()),Form("R%d_Cent_%s_TruthJetsMatched",JetRadius[jet_Rad],centBin_strg.c_str()),numpTBinsTruth,arrayTruth);
+
 	  if(debug)cout << __LINE__ << endl;
 	}else if(!matchReq){
 	  pTDisTruth[jet_Rad][iCent] = new TH1D(Form("R%d_Cent_%s_ALLTruthJets",JetRadius[jet_Rad],centBin_strg.c_str()),Form("R%d_Cent_%s_ALLTruthJets",JetRadius[jet_Rad],centBin_strg.c_str()),numpTBinsTruth,arrayTruth);
@@ -1043,6 +1047,41 @@ if(addpTShapeWght){
 	  
 	  if(debug)cout << "will this pT truth jet pass pT cut? (Index/pT)" << iJetTruth << "/" << akt_truth_jet_kin[jet_Rad][pTPar]->at(iJetTruth) << endl;
 	  if(pTTruthCut > akt_truth_jet_kin[jet_Rad][pTPar]->at(iJetTruth) && collisionType=="PbPb")continue;
+	  double ptShpWeight =1.0;
+	  if(debug)cout << __LINE__ << endl;
+	  if(collisionType == "PbPb"){
+	    if(addpTShapeWeight){
+	      if(debug)cout << __LINE__ << endl;
+	      if(akt_truth_jet_kin[jet_Rad][pTPar]->at(iJetTruth)< lowEndCutOff){
+		if(debug)cout << __LINE__ << endl;
+		ptShpWeight=ptshapeWghts[jet_Rad][centBin]->Eval(lowEndCutOff+1);
+		if(debug)cout << __LINE__ << endl;
+	      }else if(akt_truth_jet_kin[jet_Rad][pTPar]->at(iJetTruth) > highEndCutOff){
+		ptShpWeight=ptshapeWghts[jet_Rad][centBin]->Eval(lowEndCutOff-1);
+	      }else{
+		if(debug)cout << __LINE__ << endl;
+		ptShpWeight=ptshapeWghts[jet_Rad][centBin]->Eval(akt_truth_jet_kin[jet_Rad][pTPar]->at(iJetTruth)); //instead of inputing reco we input truth
+
+	      }
+	    }
+	    if(debug)cout << __LINE__ << endl;
+	    pTDisTruth_All[jet_Rad][centBin]->Fill(akt_truth_jet_kin[jet_Rad][pTPar]->at(iJetTruth),centWeight*jZweight*ptShpWeight);
+	  }else if(collisionType == "pp"){
+	    for(int iCentBin=0; iCentBin <  number_CentBins; iCentBin++){
+	      if(addpTShapeWeight){
+		if(akt_truth_jet_kin[jet_Rad][pTPar]->at(iJetTruth)< lowEndCutOff){
+		  ptShpWeight=ptshapeWghts[jet_Rad][iCentBin]->Eval(lowEndCutOff+1);
+		}else if(akt_truth_jet_kin[jet_Rad][pTPar]->at(iJetTruth) > highEndCutOff){
+		  ptShpWeight=ptshapeWghts[jet_Rad][iCentBin]->Eval(lowEndCutOff-1);
+		}else{
+		  ptShpWeight=ptshapeWghts[jet_Rad][iCentBin]->Eval(akt_truth_jet_kin[jet_Rad][pTPar]->at(iJetTruth)); //instead of inputing reco we input truth
+
+		}
+	      }
+	      pTDisTruth_All[jet_Rad][iCentBin]->Fill(akt_truth_jet_kin[jet_Rad][pTPar]->at(iJetTruth),centWeight*jZweight*ptShpWeight);
+	    }
+	  }
+	  
 	  if(debug)cout << "YES!" << endl;
 	  if(!matchReq){
 	    //pass if MATCHING is NOT required
@@ -1659,15 +1698,7 @@ if(addpTShapeWght){
 		  }else{		
 		    ptShpWeight=ptshapeWghts[jet_Rad][centBin]->Eval(akt_truth_jet_kin[jet_Rad][pTPar]->at(truthmatch)); //instead of inputing reco we input truth
 	
-		  }
-		  if(akt_jet_kin[jet_Rad][pTPar]->at(iJetReco)< lowEndCutOff){
-		    ptShpWeight_2D=ptshapeWghts[jet_Rad][centBin]->Eval(lowEndCutOff+1);
-		  }else if(akt_jet_kin[jet_Rad][pTPar]->at(iJetReco) > highEndCutOff){
-		    ptShpWeight_2D=ptshapeWghts[jet_Rad][centBin]->Eval(lowEndCutOff-1);
-		  }else{
-		    ptShpWeight_2D=ptshapeWghts[jet_Rad][centBin]->Eval(akt_jet_kin[jet_Rad][pTPar]->at(iJetReco));
-		  }
-		  
+		  }		  
 		
 		}
 	       
@@ -1882,7 +1913,7 @@ if(addpTShapeWght){
 	    R4_cent0_10_pTShpWght->Write("",TObject::kOverwrite);
 	  }
 	  pTDisTruth[jet_Rad][iCentBin]->Write("",TObject::kOverwrite);
-
+	  pTDisTruth_All[jet_Rad][iCentBin]->Write("",TObject::kOverwrite);
 	  if(full_and_ClsrTst){
 	    halfResponseMtx[jet_Rad][iCentBin]->Write("",TObject::kOverwrite);
 	    responseMatrix[jet_Rad][iCentBin]->Write("",TObject::kOverwrite);
