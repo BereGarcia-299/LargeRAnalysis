@@ -28,7 +28,7 @@
 
 using namespace std;
 
-int UnfoldingJetsCopy(bool Unfoldpp = true, bool UnfoldPbPb = false,bool Inefficciency_Corr = true,bool testUnfoldingPro = false, int jet_radius = R4,bool regCentBins = false,int numIter = 17, int etaRange = 21, int uncrt_sys = -1, string jer_or_jes = "",bool systematicUnfd = false, bool jetRate2015Bins = false,bool rAA2015Binning = false, bool dijet2018bins = true, bool officialLargeRpTBins = false,bool NopTShapeWeight=false,bool NoCentWeight = false){
+int UnfoldingJetsCopy(bool Unfoldpp = true, bool UnfoldPbPb = false,bool Inefficciency_Corr = true, bool Fake_Corr = true, bool testUnfoldingPro = true, int jet_radius = R4,bool regCentBins = false,int numIter = 17, int etaRange = 21, int uncrt_sys = -1, string jer_or_jes = "",bool systematicUnfd = false, bool jetRate2015Bins = false,bool rAA2015Binning = false, bool dijet2018bins = true, bool officialLargeRpTBins = false,bool NopTShapeWeight=false,bool NoCentWeight = false){
 
   bool matchbins = false;
 
@@ -124,10 +124,11 @@ int UnfoldingJetsCopy(bool Unfoldpp = true, bool UnfoldPbPb = false,bool Ineffic
  
 
 
-  if(jetRate2015Bins==true){
+
+  if(jetRate2015Bins){
     mc_tag = "_2015JetRateBins" + mc_tag;
     data_tag = "_2015JetRateBins" + data_tag;
-  }else if(rAA2015Binning==true){
+  }else if(rAA2015Binning){
     mc_tag = "_2015RAARateBins" +mc_tag;
     data_tag = "_2015RAARateBins" + data_tag;
   }else if(dijet2018bins){
@@ -237,7 +238,7 @@ int UnfoldingJetsCopy(bool Unfoldpp = true, bool UnfoldPbPb = false,bool Ineffic
 
 
       
-      pTDisRecoMatchedJets[iCentBin] = (TH1D*) forUnfolding->Get(Form("R%d_Cent_%s",JetRadius[jet_radius],centBin_strg.c_str()));
+      
       cout << "THis is for iCentbin:" << iCentBin << endl;
       cout << "Histo: " << Form("R%d_Cent_%s",JetRadius[jet_radius],centBin_strg.c_str()) << endl;
       
@@ -249,6 +250,14 @@ int UnfoldingJetsCopy(bool Unfoldpp = true, bool UnfoldPbPb = false,bool Ineffic
       }else{
 	pTDisTruthMatchedJets[iCentBin]= (TH1D*) forUnfolding->Get(Form("R%d_Cent_%s_AllTruthJets",JetRadius[jet_radius],centBin_strg.c_str()));
       }
+
+      if(!Fake_Corr){
+	pTDisRecoMatchedJets[iCentBin] = (TH1D*) forUnfolding->Get(Form("R%d_Cent_%s",JetRadius[jet_radius],centBin_strg.c_str()));
+      }else{
+	pTDisRecoMatchedJets[iCentBin] = (TH1D*) forUnfolding->Get(Form("R%d_Cent_%s_AllRecoJets",JetRadius[jet_radius],centBin_strg.c_str()));
+      }
+
+
 
       if(testUnfoldingPro){
 	cout << "Grabbing this histos: " << Form("pTDisFirstHalfMatch_RecoJets_R%d%s",JetRadius[jet_radius],centBin_strg.c_str()) << endl;
@@ -305,7 +314,6 @@ int UnfoldingJetsCopy(bool Unfoldpp = true, bool UnfoldPbPb = false,bool Ineffic
     jetRate2015BinsTag="_JetRate2015Bins";
   }else if(rAA2015Binning){
     jetRate2015BinsTag = "_2015RAARateBins";
-  
   }else if(dijet2018bins){
     jetRate2015BinsTag = "_2018DiJetBins";
   }else if(officialLargeRpTBins){
@@ -337,8 +345,13 @@ int UnfoldingJetsCopy(bool Unfoldpp = true, bool UnfoldPbPb = false,bool Ineffic
   for(int iCentBin =0; iCentBin <number_CentBins; iCentBin++){
     
     string centBin_strg = "NAN";
+    double scaling_factor = 1.0;
+
+
     if(dijet2018bins){
       centBin_strg =  centBins_DJ[iCentBin];
+      if(UnfoldPbPb && !testUnfoldingPro)scaling_factor = tAASubstructure_2018map[iCentBin]*numEvents_centBin[iCentBin];
+      if(Unfoldpp && !testUnfoldingPro)scaling_factor = ppDataLumiVals[jet_radius];
     }else{
       centBin_strg = centBins_2015Meas[iCentBin];
     }
@@ -378,11 +391,15 @@ int UnfoldingJetsCopy(bool Unfoldpp = true, bool UnfoldPbPb = false,bool Ineffic
       	cout << __LINE__ << endl;
       }
       cout << __LINE__ << endl;
+
+      notUnfolded[iCentBin]->Scale(1/scaling_factor);
+
       for(int iIter = 0; iIter < numIter; iIter++){
       	cout << __LINE__ << endl;
       	RooUnfoldBayes *rooUnfold_Data = nullptr;
       	cout << __LINE__ << endl;
       	RooUnfoldBayes *rooUnfold_Data_HC = nullptr;
+
       	rooUnfold_Data = new RooUnfoldBayes(unf_R,notUnfolded[iCentBin], iIter);
       	cout << __LINE__ << endl;
 	
