@@ -36,11 +36,19 @@
 #include "checkMakeDir.C"
 using namespace std;
 
-int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_mc = mcOrdata::data,  string extraTag="Data", bool debug =false, int sys_uncrt =-1, string jer_or_jes_Sys = "",bool addpTShapeWeight = true,bool jetRate2015Bins=false, bool rAA2015Binning = false, bool dijet2018bins = true, bool officialLargeRpTBins = false){
+int LargeRAnalysis(string collisionType = "pp", int jet_Rad = R4,int data_or_mc = mcOrdata::mc,  string extraTag="MC", bool debug =false, int sys_uncrt =-1, string jer_or_jes_Sys = "",bool addpTShapeWeight = true,bool jetRate2015Bins=false, bool rAA2015Binning = false, bool dijet2018bins = true, bool officialLargeRpTBins = false){
 
-  cout << "dijet2018bins: " << dijet2018bins << endl;
-  cout << "rAA2015Binning: " << rAA2015Binning << endl;
-  cout << "jetRate2015Bins: " << jetRate2015Bins << endl;
+  bool Fake_Corr = true;
+  bool Ineff_Corr=true;
+
+  if(data_or_mc = mcOrdata::mc){
+    ofstream outfile("settings_ver0.txt");
+    if(Fake_Corr)outfile << "Fake Correction (You will collect ALL Reco Jets for one of your TH1D hists)" << endl;
+    if(Ineff_Corr)outfile << "Innefficiency Correction (You will collect ALL truth Jets for one of your TH1D hists)" << endl;
+
+  }
+
+
 
   TH1::SetDefaultSumw2();
   bool dgb  = false;
@@ -49,7 +57,7 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
   bool sumpTCut_MtchTrthJets = false;
   //ptshape weights info
   double lowEndCutOff = 158; 
-  double highEndCutOff =600;
+  double highEndCutOff =550;
   
   
 
@@ -563,8 +571,8 @@ int LargeRAnalysis(string collisionType = "PbPb", int jet_Rad = R4,int data_or_m
     if(collisionType == "PbPb"){
       cout <<__LINE__ << endl;
       //tree->Add("/gpfs/mnt/atlasgpfs01/usatlas/data/bereniceg299/user.berenice.05172022.PbPb2018Data_GRL_R10_R4.0000000000_myOutput.root/*.root"); //R=0.4 and R=1.0 jets are in TTrees
-      tree->Add("/gpfs/mnt/atlasgpfs01/usatlas/data/bereniceg299/Clown/user.berenice.03132023.LargeRJet_PbPbData_R10_R04_R02_.00000000002_myOutput.root/*.root");
-      
+      //tree->Add("/gpfs/mnt/atlasgpfs01/usatlas/data/bereniceg299/Clown/user.berenice.03132023.LargeRJet_PbPbData_R10_R04_R02_.00000000002_myOutput.root/*.root");
+      tree->Add("/gpfs/mnt/atlasgpfs01/usatlas/data/bereniceg299/user.berenice.03272023.LargeRJet_PbPbData_R10_R04_R02_.00000000003_myOutput.root/*.root");
       cout <<__LINE__ << endl;
       cout << "This is how many entries you have: " << tree->GetEntries() << endl;
     }
@@ -665,13 +673,14 @@ if(addpTShapeWght){
   //Turning on Run Number Branch
   tree->SetBranchStatus("RunNumber",1);
   tree->SetBranchAddress("RunNumber", &runNumber);
-  
-  //In time and out of time pile up 
-  tree->SetBranchStatus("m_b_is_pileup",1);
-  tree->SetBranchAddress("m_b_is_pileup",&m_b_is_pileup);
+  if(collisionType == "PbPb" && data_or_mc == mcOrdata::data){
+    //In time and out of time pile up 
+    tree->SetBranchStatus("m_b_is_pileup",1);
+    tree->SetBranchAddress("m_b_is_pileup",&m_b_is_pileup);
 
-  tree->SetBranchStatus("m_b_is_oo_pileup",1);
-  tree->SetBranchAddress("m_b_is_oo_pileup",&m_b_is_oo_pileup);
+    tree->SetBranchStatus("m_b_is_oo_pileup",1);
+    tree->SetBranchAddress("m_b_is_oo_pileup",&m_b_is_oo_pileup);
+  }
   //Turning On Braches that you will use
   tree->SetBranchStatus("nvert",1);
 
@@ -874,8 +883,12 @@ if(addpTShapeWght){
     if(collisionType == "PbPb"){
 
        sumET = fcalEnergyA + fcalEnergyC;
+       sumETDisData[jet_Rad]->Fill(sumET);
        if(debug)cout << "this is the value of your sumet:" << endl << endl;
-       if(sumET > 5020)continue; //this is to get rid of pile up
+       if(dijet2018bins){
+	 if(4.7*1e+3 < sumET)continue;
+	 if(0.063719*1e+3 > sumET)continue;
+       }
        if(debug)cout << "NOT PILE UP!" << endl<<endl;
 
     }
@@ -912,12 +925,15 @@ if(addpTShapeWght){
     double jZweight = 1;
     if(data_or_mc == mc){
         if(debug)cout << "Grabbing the JZ weight! " << endl;
+	
+	  if(collisionType == "PbPb"){
+	    jZweight = jZWeights[iJZBin];
+	  }else if(collisionType == "pp"){
+	    jZweight = weights_ppMC[iJZBin]; 
+	  }
+	
+	
 
-        if(collisionType == "PbPb"){
-          jZweight = jZWeights[iJZBin];
-        }else if(collisionType == "pp"){
-          jZweight = weights_ppMC[iJZBin]; 
-        }
 	if(debug)cout << "This is the jz weight: " << jZweight << endl;
         if(debug)cout << "This is the JZ bin: " << iJZBin << endl;
 
@@ -931,12 +947,26 @@ if(addpTShapeWght){
     Int_t centBin = -1;
     Double_t cent = -1;
     if(collisionType=="PbPb"){
-      cent = centTable.GetCent(sumET);
-      centBin = ghostPos(centBins, cent, true, false);
-      if(debug){
-	cout << "This is the cent bin: " << centBin << endl;
-        cout << "centrality: " << cent << endl;
-      }
+      //if(!dijet2018bins){
+	cent = centTable.GetCent(sumET);
+	centBin = ghostPos(centBins, cent, true, false);
+        if(debug){
+	  cout << "This is the cent bin: " << centBin << endl;
+	  cout << "centrality: " << cent << endl;
+	}
+	//}else{
+	// if(4.7*1e+3 > sumET && sumET > 2.98931*1e+3){
+      // 	  centBin=0;
+      // 	}else if(sumET <= 2.98931*1e+3 && 1.36875*1e+3 < sumET){
+      // 	  centBin=1;
+      // 	}else if(sumET <= 1.36875*1e+3 && 0.525092*1e+3 < sumET){
+      // 	  centBin=2;
+      // 	}else if(sumET<= 0.525092*1e+3 && 0.063719*1e+3 <= sumET){
+      // 	  centBin=3;
+      // 	}else{
+      // 	  continue;
+      // 	}
+      // }
     }
     else centBin = 0;
     if(centBin < 0 && collisionType=="PbPb") continue;
@@ -946,6 +976,11 @@ if(addpTShapeWght){
        if(sumET > 4700)centWeight = centWeightsFunc[jet_Rad]->GetBinContent(centWeightsFunc[jet_Rad]->FindBin(4700)); 
      }
 
+     
+
+     
+  //centIndex30_40,centIndex40_50,centIndex50_60
+
      if(dijet2018bins){
      
        if(centBin == centIndex0_10)centBin=0;
@@ -954,10 +989,6 @@ if(addpTShapeWght){
        if(centBin >= centIndex50_60 && centBin <= centIndex70_80)centBin=3;
 
      }
-     
-  //centIndex30_40,centIndex40_50,centIndex50_60
-
-
 
 
     if(debug)cout<< __LINE__ << endl;
@@ -1927,7 +1958,6 @@ if(addpTShapeWght){
       
 
 
-      if(sumETHist && collisionType == "PbPb")sumETDisData[jet_Rad]->Write("",TObject::kOverwrite);
       
       if(fakeJets_Study && collisionType=="pp"){
 	 pTDis_RJ_sumpTCut[jet_Rad]->Write("",TObject::kOverwrite);
@@ -1962,6 +1992,9 @@ if(addpTShapeWght){
 
       }//Cent Bin Loop
     
+
+      if(sumETHist && collisionType == "PbPb")sumETDisData[jet_Rad]->Write("",TObject::kOverwrite);
+      
 
     files_root->Close();
 
